@@ -176,7 +176,7 @@ class Scene:
             for _ in range(spp):
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
-            # if self.window.is_pressed('p'):
+            # if self.window.is_pressed('p'):   # Save screenshot
             #     timestamp = datetime.today().strftime('%Y-%m-%d-%H%M%S')
             #     dirpath = os.getcwd()
             #     main_filename = os.path.split(__main__.__file__)[1]
