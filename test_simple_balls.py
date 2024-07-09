@@ -6,7 +6,8 @@ from taichi.math import *
 
 ti.init(arch=ti.gpu, default_ip=ti.i32, default_fp=ti.f32)
 
-image_resolution = (1920 // 4, 1080 // 4)
+image_resolution = (192*6, 108*6)
+
 
 image_buffer = ti.Vector.field(4, float, image_resolution)
 image_pixels = ti.Vector.field(3, float, image_resolution)
@@ -425,7 +426,7 @@ while window.running:
             camera.curr_position, 
             camera.curr_lookat, 
             camera.curr_up)
-        print('frame:', frame, 'sample:', i + 1)
+        # print('frame:', frame, 'sample:', i + 1)
     frame += 1
     render()
     
