@@ -273,7 +273,7 @@ class Renderer:
                 depth += 1
                 closest, normal, c, hit_light = self.next_hit(pos, d, t)
                 hit_pos = pos + closest * d
-                if not hit_light and normal.norm() != 0 and closest < 1e8:
+                if not hit_light and normal.norm() != 0 and closest < 1e8: # type: ignore
                     d = out_dir(normal)
                     pos = hit_pos + 1e-4 * d
                     throughput *= c
