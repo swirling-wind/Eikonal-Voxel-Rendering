@@ -90,7 +90,7 @@ class Renderer:
     @ti.func
     def _to_voxel_index(self, pos):
         p = pos * self.voxel_inv_dx
-        voxel_index = ti.floor(p).cast(ti.i32)
+        voxel_index = ti.floor(p).cast(ti.i32) # type: ignore
         return voxel_index
 
     @ti.func
@@ -99,15 +99,15 @@ class Renderer:
         p -= ti.floor(p)
         voxel_index = self._to_voxel_index(pos)
 
-        boundary = self.voxel_edges
-        count = 0
-        for i in ti.static(range(3)):
-            if p[i] < boundary or p[i] > 1 - boundary:
-                count += 1
+        # boundary = self.voxel_edges
+        # count = 0
+        # for i in ti.static(range(3)):
+        #     if p[i] < boundary or p[i] > 1 - boundary:
+        #         count += 1
 
         f = 0.0
-        if count >= 2:
-            f = 1.0
+        # if count >= 2: # Render the boundary / edge
+        #     f = 1.0
 
         voxel_color = ti.Vector([0.0, 0.0, 0.0])
         is_light = 0
