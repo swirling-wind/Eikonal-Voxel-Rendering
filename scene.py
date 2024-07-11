@@ -10,7 +10,7 @@ import __main__
 
 VOXEL_DX = 1 / 64
 SCREEN_RES = (1280, 720)
-TARGET_FPS = 24
+TARGET_FPS = 40
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
 ====================================================
@@ -159,7 +159,7 @@ class Scene:
     def finish(self):
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
-        spp = 1
+        spp = 16
         while self.window.running:
             should_reset_framebuffer = False
 
@@ -172,7 +172,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            t = time.time()
+            # t = time.time()
             for _ in range(spp):
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
@@ -184,12 +184,12 @@ class Scene:
             #     ti.tools.image.imwrite(img, fname)
             #     print(f"Screenshot has been saved to {fname}")
             canvas.set_image(img)
-            elapsed_time = time.time() - t
-            if elapsed_time * TARGET_FPS > 1:
-                spp = int(spp / (elapsed_time * TARGET_FPS) - 1)
-                spp = max(spp, 1)
-            else:
-                spp += 1
+            # elapsed_time = time.time() - t
+            # if elapsed_time * TARGET_FPS > 1:
+            #     spp = int(spp / (elapsed_time * TARGET_FPS) - 1)
+            #     spp = max(spp, 1)
+            # else:
+            #     spp += 1
             self.window.show()
         
         self.window.destroy()
