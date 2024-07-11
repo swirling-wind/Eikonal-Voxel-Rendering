@@ -2,7 +2,7 @@ from scene import Scene
 import taichi as ti
 from taichi.math import *
 
-ti.init(arch=ti.cpu)
+ti.init(arch=ti.gpu)
 
 @ti.kernel
 def vector_matrix():
