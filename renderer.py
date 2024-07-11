@@ -195,6 +195,7 @@ class Renderer:
 
     @ti.func
     def inside_particle_grid(self, ipos):
+        # Check if the voxel is inside the bounding box
         pos = ipos * self.voxel_dx
         return self.bbox[0][0] <= pos[0] and pos[0] < self.bbox[1][
             0] and self.bbox[0][1] <= pos[1] and pos[1] < self.bbox[1][
