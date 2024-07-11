@@ -159,7 +159,6 @@ class Scene:
     def finish(self):
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
-        spp = 16
         while self.window.running:
             should_reset_framebuffer = False
 
@@ -172,8 +171,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            # t = time.time()
-            for _ in range(spp):
+            for _ in range(4): # Use 16 samples per pixel (spp) to get fps around 40
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot
@@ -184,12 +182,6 @@ class Scene:
             #     ti.tools.image.imwrite(img, fname)
             #     print(f"Screenshot has been saved to {fname}")
             canvas.set_image(img)
-            # elapsed_time = time.time() - t
-            # if elapsed_time * TARGET_FPS > 1:
-            #     spp = int(spp / (elapsed_time * TARGET_FPS) - 1)
-            #     spp = max(spp, 1)
-            # else:
-            #     spp += 1
             self.window.show()
         
         self.window.destroy()
