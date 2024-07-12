@@ -1,20 +1,19 @@
-from scene import Scene
 import taichi as ti
 from taichi.math import *
+import numpy as np
+ti.init(arch=ti.gpu)
 
-scene = Scene(exposure=1)
-scene.set_directional_light((1, 1, 1), 0.1, (1, 1, 1))
-scene.set_background_color((0.3, 0.4, 0.6))
+@ti.data_oriented
+class TiArray:
+    def __init__(self, n):
+        self.x = ti.field(dtype=ti.i32, shape=n)
 
+    @ti.kernel
+    def inc(self):
+        print(self.x)
+        for i in self.x:
+            self.x[i] += 1
 
-@ti.kernel
-def initialize_voxels():
-    n = 60
-    for i, j, k in ti.ndrange((-n, n), (-n, n), (-n, n)):
-        x = ivec3(i, j, k)
-        if x.dot(x) < n * n * 0.5:
-            scene.set_voxel(vec3(i, j, k), 1, vec3(0.9, 0.3, 0.3))
-
-
-initialize_voxels()
-scene.finish()
+a = TiArray(32)
+a.inc()
+print(a.x.to_numpy())

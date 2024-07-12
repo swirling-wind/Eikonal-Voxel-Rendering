@@ -119,18 +119,18 @@ class Renderer:
         return voxel_color * (1.3 - 1.2 * f), is_light
 
     @ti.func
-    def ray_march(self, p, d):
+    def ray_march(self, p, d):  # floor's sdf
         dist = inf
         if d[1] < -eps:
             dist = (self.floor_height[None] - p[1]) / d[1]
         return dist
 
     @ti.func
-    def sdf_normal(self, p):
+    def sdf_normal(self, p):    # floor's normal
         return ti.Vector([0.0, 1.0, 0.0])  # up
 
     @ti.func
-    def sdf_color(self, p):
+    def sdf_color(self, p):   # floor's color
         return self.floor_color[None]
 
     @ti.func
@@ -211,6 +211,7 @@ class Renderer:
 
         ray_march_dist = self.ray_march(pos, d)
         if ray_march_dist < DIS_LIMIT and ray_march_dist < closest:
+            #  Floor hit
             closest = ray_march_dist
             normal = self.sdf_normal(pos + d * closest)
             c = self.sdf_color(pos + d * closest)
