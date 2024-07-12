@@ -361,7 +361,7 @@ class Renderer:
         c = ti.math.clamp(c, 0.0, 1.0)
         r = ti.Vector([ti.u8(0), ti.u8(0), ti.u8(0)])
         for i in ti.static(range(3)):
-            r[i] = ti.cast(c[i] * 255, ti.u8)
+            r[i] = ti.cast(c[i] * 255, ti.u8) # type: ignore
         return r
 
     @staticmethod
@@ -382,3 +382,4 @@ class Renderer:
         mat = self.voxel_material[ijk]
         color = self.voxel_color[ijk]
         return mat, self.to_vec3(color)
+

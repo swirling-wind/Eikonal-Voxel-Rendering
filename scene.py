@@ -133,9 +133,9 @@ class Scene:
     def round_idx(idx_):
         idx = ti.cast(idx_, ti.f32)
         return ti.Vector(
-            [ti.round(idx[0]),
-             ti.round(idx[1]),
-             ti.round(idx[2])]).cast(ti.i32)
+            [ti.round(idx[0]), # type: ignore
+             ti.round(idx[1]), # type: ignore
+             ti.round(idx[2])]).cast(ti.i32) # type: ignore
 
     @ti.func
     def set_voxel(self, idx, mat, color):
@@ -171,7 +171,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            for _ in range(4): # Use 16 samples per pixel (spp) to get fps around 40
+            for _ in range(4): # samples per pixel (spp) to adjust fps
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot
