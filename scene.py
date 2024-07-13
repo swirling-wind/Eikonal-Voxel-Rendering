@@ -186,3 +186,6 @@ class Scene:
             self.window.show()
         
         self.window.destroy()
+
+    def get_ior_grid(self):
+        return self.renderer.get_ior_grid()

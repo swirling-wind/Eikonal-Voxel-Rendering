@@ -391,7 +391,7 @@ class Renderer:
         color = self.voxel_color[ijk]
         return mat, self.to_vec3(color)
     
-    @ti.func
+    # @ti.func
     def get_ior_grid(self):
         return self.voxel_ior.to_numpy()
 
