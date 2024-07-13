@@ -112,7 +112,7 @@ class Camera:
 
 class Scene:
     def __init__(self, voxel_edges=0.06, exposure=3):
-        ti.init(arch=ti.gpu)
+        ti.init(arch=ti.gpu, debug=True) # debug=True to check boundary access
         print(HELP_MSG)
         self.window = ti.ui.Window("Taichi Voxel Renderer",
                                    SCREEN_RES,
@@ -171,7 +171,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            for _ in range(4): # samples per pixel (spp) to adjust fps
+            for _ in range(2): # samples per pixel (spp) to adjust fps
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot

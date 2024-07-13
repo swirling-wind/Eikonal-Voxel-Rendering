@@ -2,6 +2,9 @@ from scene import Scene
 import taichi as ti
 from taichi.math import *
 
+# import sys
+# sys.tracebacklimit=0 # Make error message shorter
+
 scene = Scene()
 scene.set_floor(0, (1, 1, 1))
 
