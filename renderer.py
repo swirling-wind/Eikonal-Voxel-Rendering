@@ -21,8 +21,10 @@ class Renderer:
         self.color_buffer = ti.Vector.field(3, dtype=ti.f32)
         self.bbox = ti.Vector.field(3, dtype=ti.f32, shape=2)
         self.fov = ti.field(dtype=ti.f32, shape=())
+
         self.voxel_color = ti.Vector.field(3, dtype=ti.u8)
         self.voxel_material = ti.field(dtype=ti.i8)
+        self.voxel_ior = ti.field(dtype=ti.f32)
 
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.light_direction_noise = ti.field(dtype=ti.f32, shape=())
@@ -52,8 +54,9 @@ class Renderer:
         ti.root.dense(ti.ij, image_res).place(self.color_buffer)
         ti.root.dense(ti.ijk,
                       self.voxel_grid_res).place(self.voxel_color,
-                                                 self.voxel_material,
-                                                 offset=voxel_grid_offset)
+                                                self.voxel_material,
+                                                self.voxel_ior,
+                                                offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
         self.set_up(*up)
@@ -61,6 +64,8 @@ class Renderer:
 
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
+
+        self.voxel_ior.fill(1.0)
 
     def set_directional_light(self, direction, light_direction_noise,
                               light_color):
@@ -374,13 +379,19 @@ class Renderer:
         return r
 
     @ti.func
-    def set_voxel(self, idx, mat, color):
+    def set_voxel(self, idx, mat, color, ior=1.0):
         self.voxel_material[idx] = ti.cast(mat, ti.i8)
         self.voxel_color[idx] = self.to_vec3u(color)
+        self.voxel_ior[idx] = ior
+
 
     @ti.func
     def get_voxel(self, ijk):
         mat = self.voxel_material[ijk]
         color = self.voxel_color[ijk]
         return mat, self.to_vec3(color)
+    
+    @ti.func
+    def get_ior_grid(self):
+        return self.voxel_ior.to_numpy()
 

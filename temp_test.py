@@ -10,6 +10,7 @@ class TiArray:
 
     @ti.kernel
     def inc(self):
+          
         for i in self.x:
             self.x[i] += 1
 

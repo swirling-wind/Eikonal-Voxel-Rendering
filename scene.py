@@ -26,7 +26,7 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.4, 0.5, 2.0))
+        self._camera_pos = np.array((0.0, 0.0, 2.0))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -112,7 +112,7 @@ class Camera:
 
 class Scene:
     def __init__(self, voxel_edges=0.06, exposure=3):
-        ti.init(arch=ti.gpu, debug=True) # debug=True to check boundary access
+        ti.init(arch=ti.gpu) # debug=True to check boundary access
         print(HELP_MSG)
         self.window = ti.ui.Window("Taichi Voxel Renderer",
                                    SCREEN_RES,
@@ -159,6 +159,7 @@ class Scene:
     def finish(self):
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
+        print(self.camera.position, self.camera.look_at)
         while self.window.running:
             should_reset_framebuffer = False
 
@@ -171,7 +172,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            for _ in range(2): # samples per pixel (spp) to adjust fps
+            for _ in range(4): # samples per pixel (spp) to adjust fps
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot

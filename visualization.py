@@ -10,7 +10,7 @@ scene.set_floor(0, (1, 1, 1))
 
 @ti.kernel
 def initialize_voxels():
-    
+    # scene.set_voxel(vec3(10,10,10), 0, vec3(1, 1, 1))
     for i in range(31):
         for j in range(31):
             # Light wall
