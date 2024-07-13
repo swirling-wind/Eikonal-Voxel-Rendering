@@ -138,8 +138,8 @@ class Scene:
              ti.round(idx[2])]).cast(ti.i32) # type: ignore
 
     @ti.func
-    def set_voxel(self, idx, mat, color):
-        self.renderer.set_voxel(self.round_idx(idx), mat, color)
+    def set_voxel(self, idx, mat, color, ior=1.0):
+        self.renderer.set_voxel(self.round_idx(idx), mat, color, ior)
 
     @ti.func
     def get_voxel(self, idx):
