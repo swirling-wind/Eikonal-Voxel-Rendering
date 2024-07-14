@@ -187,5 +187,5 @@ class Scene:
         
         self.window.destroy()
 
-    def get_ior_grid(self):
+    def get_ior_grid(self) -> np.ndarray:
         return self.renderer.get_ior_grid()
