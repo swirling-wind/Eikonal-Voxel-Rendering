@@ -187,5 +187,5 @@ class Scene:
         
         self.window.destroy()
 
-    def get_ior_grid(self) -> np.ndarray:
+    def get_ior_grid(self) -> ti.ScalarField:
         return self.renderer.get_ior_grid()

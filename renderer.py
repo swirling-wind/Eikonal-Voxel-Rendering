@@ -392,6 +392,6 @@ class Renderer:
         return mat, self.to_vec3(color)
     
     # @ti.func
-    def get_ior_grid(self):
-        return self.voxel_ior.to_numpy()
+    def get_ior_grid(self) -> ti.ScalarField:
+        return self.voxel_ior
 
