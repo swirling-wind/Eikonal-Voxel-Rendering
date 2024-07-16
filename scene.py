@@ -159,7 +159,7 @@ class Scene:
     def finish(self):
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
-        print(self.camera.position, self.camera.look_at)
+        # print(self.camera.position, self.camera.look_at)
         while self.window.running:
             should_reset_framebuffer = False
 
