@@ -26,6 +26,10 @@ class Renderer:
         self.voxel_material = ti.field(dtype=ti.i8)
         self.voxel_ior = ti.field(dtype=ti.f32)
 
+        self.voxel_irradiance = ti.Vector.field(3, dtype=ti.f32)
+        self.local_directions = ti.Vector.field(3, dtype=ti.f32)
+        self.voxel_opaque = ti.field(dtype=ti.i32)
+
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.light_direction_noise = ti.field(dtype=ti.f32, shape=())
         self.light_color = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -56,6 +60,9 @@ class Renderer:
                       self.voxel_grid_res).place(self.voxel_color,
                                                 self.voxel_material,
                                                 self.voxel_ior,
+                                                self.voxel_irradiance,
+                                                self.local_directions,
+                                                self.voxel_opaque,
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
