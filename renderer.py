@@ -18,18 +18,21 @@ class Renderer:
         self.vignette_center = [0.5, 0.5]
         self.current_spp = 0
 
+        # Framebuffer and box of the scene
         self.color_buffer = ti.Vector.field(3, dtype=ti.f32)
         self.bbox = ti.Vector.field(3, dtype=ti.f32, shape=2)
         self.fov = ti.field(dtype=ti.f32, shape=())
 
+        # Voxel grid
         self.voxel_color = ti.Vector.field(3, dtype=ti.u8)
         self.voxel_material = ti.field(dtype=ti.i8)
-        self.voxel_ior = ti.field(dtype=ti.f32)
 
-        self.voxel_irradiance = ti.Vector.field(3, dtype=ti.f32)
-        self.local_directions = ti.Vector.field(3, dtype=ti.f32)
-        self.voxel_opaque = ti.field(dtype=ti.i32)
+        self.IOR = ti.field(dtype=ti.f32)
+        self.Irr = ti.Vector.field(3, dtype=ti.f32)
+        self.Loc_dir = ti.Vector.field(3, dtype=ti.f32)
+        self.Att = ti.Vector.field(3, dtype=ti.f32)
 
+        # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.light_direction_noise = ti.field(dtype=ti.f32, shape=())
         self.light_color = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -37,16 +40,14 @@ class Renderer:
         self.cast_voxel_hit = ti.field(ti.i32, shape=())
         self.cast_voxel_index = ti.Vector.field(3, ti.i32, shape=())
 
+        # Scene settings
         self.voxel_edges = voxel_edges
         self.exposure = exposure
-
         self.camera_pos = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.look_at = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.up = ti.Vector.field(3, dtype=ti.f32, shape=())
-
         self.floor_height = ti.field(dtype=ti.f32, shape=())
         self.floor_color = ti.Vector.field(3, dtype=ti.f32, shape=())
-
         self.background_color = ti.Vector.field(3, dtype=ti.f32, shape=())
 
         self.voxel_dx = dx
@@ -59,10 +60,10 @@ class Renderer:
         ti.root.dense(ti.ijk,
                       self.voxel_grid_res).place(self.voxel_color,
                                                 self.voxel_material,
-                                                self.voxel_ior,
-                                                self.voxel_irradiance,
-                                                self.local_directions,
-                                                self.voxel_opaque,
+                                                self.IOR,
+                                                self.Irr,
+                                                self.Loc_dir,
+                                                self.Att,
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
@@ -72,7 +73,7 @@ class Renderer:
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
 
-        self.voxel_ior.fill(1.0)
+        self.IOR.fill(1.0)
 
     def set_directional_light(self, direction, light_direction_noise,
                               light_color):
@@ -389,7 +390,7 @@ class Renderer:
     def set_voxel(self, idx, mat, color, ior=1.0):
         self.voxel_material[idx] = ti.cast(mat, ti.i8)
         self.voxel_color[idx] = self.to_vec3u(color)
-        self.voxel_ior[idx] = ior
+        self.IOR[idx] = ior
 
 
     @ti.func
@@ -400,5 +401,5 @@ class Renderer:
     
     # @ti.func
     def get_ior_grid(self) -> ti.ScalarField:
-        return self.voxel_ior
+        return self.IOR
 

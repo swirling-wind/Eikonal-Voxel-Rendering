@@ -111,22 +111,15 @@ class Camera:
 
 
 class Scene:
-    def __init__(self, voxel_edges=0.06, exposure=3):
-        ti.init(arch=ti.gpu) # debug=True to check boundary access
-        print(HELP_MSG)
-        self.window = ti.ui.Window("Taichi Voxel Renderer",
-                                   SCREEN_RES,
-                                   vsync=True)
-        self.camera = Camera(self.window, up=UP_DIR)
+    def __init__(self, voxel_edges=0.06, exposure=3):        
         self.renderer = Renderer(dx=VOXEL_DX,
                                  image_res=SCREEN_RES,
                                  up=UP_DIR,
                                  voxel_edges=voxel_edges,
                                  exposure=exposure)
 
-        self.renderer.set_camera_pos(*self.camera.position)
-        if not os.path.exists('screenshot'):
-            os.makedirs('screenshot')
+        # if not os.path.exists('screenshot'):
+        #     os.makedirs('screenshot')
 
     @staticmethod
     @ti.func
@@ -157,6 +150,15 @@ class Scene:
         self.renderer.background_color[None] = color
 
     def finish(self):
+        print(HELP_MSG)
+        self.window = ti.ui.Window("Taichi Voxel Renderer",
+                                   SCREEN_RES,
+                                   vsync=True)
+        self.camera = Camera(self.window, up=UP_DIR)
+        self.renderer.set_camera_pos(*self.camera.position)
+        self.renderer.set_look_at(*self.camera.look_at)
+        self.renderer.reset_framebuffer()
+
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
