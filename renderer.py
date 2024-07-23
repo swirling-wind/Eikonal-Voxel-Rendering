@@ -28,10 +28,11 @@ class Renderer:
         self.voxel_material = ti.field(dtype=ti.i8)
 
         self.IOR = ti.field(dtype=ti.f32)
-        self.Att = ti.Vector.field(3, dtype=ti.f32)
+        self.Att = ti.field(dtype=ti.f32)
 
         self.Grad = ti.Vector.field(3, dtype=ti.f32)
-        self.Irr = ti.Vector.field(3, dtype=ti.f32)
+        
+        self.Irr = ti.field(dtype=ti.f32)
         self.Loc_dir = ti.Vector.field(3, dtype=ti.f32)        
 
         # Viewing ray
