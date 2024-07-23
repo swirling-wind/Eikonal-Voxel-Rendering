@@ -28,9 +28,11 @@ class Renderer:
         self.voxel_material = ti.field(dtype=ti.i8)
 
         self.IOR = ti.field(dtype=ti.f32)
-        self.Irr = ti.Vector.field(3, dtype=ti.f32)
-        self.Loc_dir = ti.Vector.field(3, dtype=ti.f32)
         self.Att = ti.Vector.field(3, dtype=ti.f32)
+
+        self.Grad = ti.Vector.field(3, dtype=ti.f32)
+        self.Irr = ti.Vector.field(3, dtype=ti.f32)
+        self.Loc_dir = ti.Vector.field(3, dtype=ti.f32)        
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -61,9 +63,11 @@ class Renderer:
                       self.voxel_grid_res).place(self.voxel_color,
                                                 self.voxel_material,
                                                 self.IOR,
-                                                self.Irr,
-                                                self.Loc_dir,
                                                 self.Att,
+
+                                                self.Grad,
+                                                self.Irr,
+                                                self.Loc_dir,                                                
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
@@ -399,7 +403,11 @@ class Renderer:
         color = self.voxel_color[ijk]
         return mat, self.to_vec3(color)
     
-    # @ti.func
-    def get_ior_grid(self) -> ti.ScalarField:
+    def get_ior_grid(self) -> ti.ScalarField: # Because Taichi functions cannot be called from Python-scope, we could not use ti.func
         return self.IOR
 
+    def set_grad_field(self, grad_field: ti.types.ndarray()): # type: ignore
+        self.Grad = grad_field
+
+    def get_grad_field(self):
+        return self.Grad

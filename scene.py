@@ -174,7 +174,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            for _ in range(4): # samples per pixel (spp) to adjust fps
+            for _ in range(2): # samples per pixel (spp) to adjust fps
                 self.renderer.accumulate()
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot
@@ -191,3 +191,9 @@ class Scene:
 
     def get_ior_grid(self) -> ti.ScalarField:
         return self.renderer.get_ior_grid()
+    
+    def set_grad_field(self, grad_field: ti.types.ndarray()): # type: ignore
+        self.renderer.set_grad_field(grad_field)
+
+    def get_grad_field(self) -> np.ndarray:
+        return self.renderer.get_grad_field()
