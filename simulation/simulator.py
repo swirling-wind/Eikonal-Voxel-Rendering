@@ -1,4 +1,4 @@
-from common.plot import *
+from common.plot import Plotter
 
 import numpy as np
 import torch
@@ -53,7 +53,7 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
 def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
                                    initial_wavefront_pos: np.ndarray, initial_wavefront_dir: np.ndarray, 
                                    device: torch.device, 
-                                   sampler_multiplier: int, floor_height: int,
+                                   plotter: Plotter,
                                    num_steps: int = 100, delta_t: float = 1.0, num_show_images: int = 3) -> tuple[np.ndarray, np.ndarray]:
     
     stride = max(num_steps // (num_show_images-1), 1)
@@ -80,7 +80,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray,
         irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
 
         if num_show_images > 0 and cur_step in show_indices:
-            plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), ior_field, f"Step {cur_step} (Total: {indices.shape[0]})", sampler_multiplier, floor_height)
+            plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {indices.shape[0]})")
 
     return irradiance_grid.cpu().numpy(), local_directions.cpu().numpy()
 
