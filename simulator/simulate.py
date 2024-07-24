@@ -80,7 +80,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray,
         irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
 
         if num_show_images > 0 and cur_step in show_indices:
-            plot_wavefront_positions(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), ior_field, f"Step {cur_step} (Total: {indices.shape[0]})", sampler_multiplier, floor_height)
+            plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), ior_field, f"Step {cur_step} (Total: {indices.shape[0]})", sampler_multiplier, floor_height)
 
     return irradiance_grid.cpu().numpy(), local_directions.cpu().numpy()
 
@@ -100,3 +100,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray,
 
 # num_monte_carlo_iterations = 4
 # avg_irradiance_grid = run_monte_carlo_simulation(num_monte_carlo_iterations, sampler_multiplier, pos_perturbation_scale)
+
+def remove_under_floor(grid: np.ndarray, floor_height: int) -> np.ndarray:
+    grid[:, :floor_height, :] = 0
+    return grid
