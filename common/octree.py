@@ -110,7 +110,7 @@ class Octree:
         grid = np.zeros((self.grid_size, self.grid_size, self.grid_size))
         assert self.root is not None, "Octree is empty. Maybe you forgot to construct it?"
         self._fill_grid(self.root, grid, 0, 0, 0, self.grid_size)
-        visualise_irradiance_grid_slices(grid, threshold=self.threshold, num_slices=num_slices, z_start=z_start, z_end=z_end)
+        plot_irradiance_slices(grid, threshold=self.threshold, num_slices=num_slices, z_start=z_start, z_end=z_end)
 
     def _fill_grid(self, node: Node, grid: np.ndarray, x: int, y: int, z: int, size: int):
         if node is None or size == 0:
