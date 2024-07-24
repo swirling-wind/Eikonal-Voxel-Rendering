@@ -1,10 +1,8 @@
 from common.plot import *
 
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-from scipy import ndimage
 import torch
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
 

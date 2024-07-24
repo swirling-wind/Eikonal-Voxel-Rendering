@@ -1,7 +1,7 @@
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-
+from matplotlib.colors import Normalize
+from matplotlib.cm import ScalarMappable
 
 PLOT_STRIDE_LENGTH = 709
 
@@ -89,8 +89,7 @@ def plot_wavefront_positions(pos: np.ndarray, dir: np.ndarray, ior_field: np.nda
     plt.show()
 
 def visualise_irradiance_grid_3d(radiometric_grid: np.ndarray, floor_height: int, threshold=3.0):
-    from matplotlib.colors import Normalize
-    from matplotlib.cm import ScalarMappable
+
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(111, projection='3d')
     ax.set_box_aspect([1, 1, 1])
