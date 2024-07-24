@@ -83,14 +83,13 @@ def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), fl
     add_ball(LARGE_R, vec3(-32, origin_y(LARGE_R, LARGE_R), 0), RED, 1, GLASS_IOR)
     add_ball(MEDIUM_R, vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), BLUE, 1, GLASS_IOR)
     add_bunny(bunny_field, vec3(3, floor_ratio * 64, 0), GREY, 1, GLASS_IOR, num_x, num_y, num_z)
-    add_glass(glass_field, vec3(-32, floor_ratio * 64, 0), WHITE, 1, GLASS_IOR, num_x, num_y, num_z)
+    add_glass(glass_field, vec3(-24, floor_ratio * 64, -128), WHITE, 1, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
 
 def setup_voxel_scene(num_x: int, num_y: int, num_z: int):
     global scene, bunny_field, glass_field
 
     num_xyz = (num_x, num_y, num_z)
-
-    bunny_voxels = load_and_voxelize_mesh('./assets/bun_zipper_res4.ply', num_xyz, 0.004)
+    bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res4.ply", num_xyz, 0.004)
     glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", num_xyz, 0.07, need_rotate=True)
     bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, num_xyz)
 
