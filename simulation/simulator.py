@@ -21,7 +21,7 @@ def compute_ior_gradient(ior_field: np.ndarray) -> np.ndarray:
     return np.stack(grad_xyz, axis=-1)
 
 @torch.jit.script
-def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Tensor, grad_xyz: torch.Tensor, IOR: torch.Tensor, delta_t: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Tensor, grad_xyz: torch.Tensor, IOR: torch.Tensor, step_size: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     indices = pos.int()
     # Obtain the refractive index at the current position
     n = IOR[indices[:, 0].clamp(0, IOR.shape[0] - 1),
@@ -29,7 +29,7 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
             indices[:, 2].clamp(0, IOR.shape[2] - 1)]
 
     # Calculate the new position and direction of the wavefront
-    new_pos = pos + delta_t * dir / (n**2).unsqueeze(1)
+    new_pos = pos + step_size * dir / (n**2).unsqueeze(1)
 
     # Create a mask to identify the wavefront positions that are within the boundaries of the IOR field
     new_within_mask = (new_pos[:, 0] >= 0) & (new_pos[:, 0] < IOR.shape[0]) & \
@@ -44,41 +44,56 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
 
     # Update the direction only for the wavefront positions within the IOR boundaries
     new_dir = torch.where(new_within_mask.unsqueeze(1),
-                          dir + delta_t * grad_xyz[clamped_indices_x, clamped_indices_y, clamped_indices_z] / n.unsqueeze(1),
+                          dir + step_size * grad_xyz[clamped_indices_x, clamped_indices_y, clamped_indices_z] / n.unsqueeze(1),
                           dir)
     return new_pos, new_dir, new_within_mask
 
 
 def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, atten_grid: np.ndarray,
                                    initial_wavefront_pos: np.ndarray, initial_wavefront_dir: np.ndarray, 
-                                   device: torch.device, 
-                                   plotter: Plotter,
-                                   num_steps: int = 100, delta_t: float = 1.0, num_show_images: int = 3) -> np.ndarray:
+                                   device: torch.device, plotter: Plotter,
+                                   num_steps: int = 100, step_size: float = 1.0, num_show_images: int = 3) -> np.ndarray:
     
     stride = max(num_steps // (num_show_images-1), 1)
-    show_indices =  [i for i in range(stride, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
+    plot_step_indices =  [i for i in range(stride, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
 
+    # Initialize the wavefront position and direction (initial_wavefront_pos.shape[0] = 30000 or highter) and the mask to keep track of the wavefront positions within the IOR boundaries
     cur_pos = torch.tensor(initial_wavefront_pos, device=device)
     cur_dir = torch.tensor(initial_wavefront_dir, device=device)
     within_mask = torch.ones(initial_wavefront_pos.shape[0], dtype=torch.bool, device=device)
-    
-    grad_tensor = torch.tensor(grad_xyz, device=device)
-    ior_tensor = torch.tensor(ior_field, device=device)
-    atten_tensor = torch.tensor(atten_grid, device=device)
+
+    # Initialize the all photons' absorption A to zero
+    photon_energy = torch.ones(initial_wavefront_pos.shape[0], device=device)
+
+    # Convert (128,128,128) voxel grids to tensors
+    voxel_ior = torch.tensor(ior_field, device=device)
+    voxel_grad = torch.tensor(grad_xyz, device=device)
+    voxel_atten = torch.tensor(atten_grid, device=device)
 
     irradiance_grid = torch.zeros(ior_field.shape, device=device)
 
     for cur_step in range(num_steps):
-        new_positions, new_directions, within_mask = update_wavefront(cur_pos, cur_dir, within_mask, grad_tensor, ior_tensor, delta_t)
+        new_positions, new_directions, within_mask = update_wavefront(cur_pos, cur_dir, within_mask, voxel_grad, voxel_ior, step_size)
         cur_pos = new_positions
         cur_dir = new_directions
 
-        indices = cur_pos.int()[within_mask]
-        unique_indices, counts = torch.unique(indices, return_counts=True, dim=0)
-        irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
+        within_indices = cur_pos.int()[within_mask]
 
-        if num_show_images > 0 and cur_step in show_indices:
-            plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {indices.shape[0]})")
+        attenuation_coef = voxel_atten[within_indices[:, 0], within_indices[:, 1], within_indices[:, 2]]
+        photon_energy[within_mask] *= torch.exp(-attenuation_coef)
+
+        # Accumulate the attenuated photon energy to the irradiance grid
+        unique_indices, inverse_indices = torch.unique(within_indices, return_inverse=True, dim=0)
+        energy_sum = torch.zeros(unique_indices.shape[0], device=device)
+        energy_sum.scatter_add_(0, inverse_indices, photon_energy[within_mask])
+        irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += energy_sum
+
+        # Currrently simply count the number of photons at each voxel and add the count to the irradiance grid
+        # unique_indices, counts = torch.unique(within_indices, return_counts=True, dim=0)
+        # irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
+
+        if num_show_images > 0 and cur_step in plot_step_indices:
+            plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {within_indices.shape[0]})")
 
     return irradiance_grid.cpu().numpy()
 

@@ -78,7 +78,7 @@ class Renderer:
         self.floor_color[None] = (1, 1, 1)
 
         self.ior.fill(1.0)
-        self.atten.fill(0.1)
+        self.atten.fill(0.006)
 
     def set_directional_light(self, direction, light_direction_noise,
                               light_color):
