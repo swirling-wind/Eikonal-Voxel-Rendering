@@ -188,11 +188,32 @@ class Scene:
         
         self.window.destroy()
 
-    def get_ior_grid(self) -> ti.ScalarField:
-        return self.renderer.get_ior_grid()
-    
-    def set_grad_field(self, grad_field: ti.types.ndarray()): # type: ignore
-        self.renderer.set_grad_field(grad_field)
+    def set_ior(self, ior_grid: ti.types.ndarray()): # type: ignore
+        self.renderer.set_ior(ior_grid)
 
-    def get_grad_field(self) -> np.ndarray:
-        return self.renderer.get_grad_field()
+    def get_ior(self) -> np.ndarray:
+        ior_grid = self.renderer.get_ior()
+        if isinstance(ior_grid, np.ndarray):
+            return ior_grid
+        else:
+            return ior_grid.to_numpy()
+    
+    def set_gradient(self, grad_field: ti.types.ndarray()): # type: ignore
+        self.renderer.set_grad(grad_field)
+
+    def get_gradient(self) -> np.ndarray:
+        grad_grid = self.renderer.get_grad()
+        if isinstance(grad_grid, np.ndarray):
+            return grad_grid
+        else:
+            return grad_grid.to_numpy()
+    
+    def set_attenuation(self, atten_field: ti.types.ndarray()): # type: ignore
+        self.renderer.set_atten(atten_field)
+
+    def get_attenuation(self) -> np.ndarray:
+        atten_grid = self.renderer.get_atten()
+        if isinstance(atten_grid, np.ndarray):
+            return atten_grid
+        else:
+            return atten_grid.to_numpy()

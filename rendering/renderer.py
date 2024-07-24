@@ -1,5 +1,4 @@
 import taichi as ti
-
 from common.math_utils import (eps, inf, out_dir, ray_aabb_intersection)
 
 MAX_RAY_DEPTH = 4
@@ -27,13 +26,13 @@ class Renderer:
         self.voxel_color = ti.Vector.field(3, dtype=ti.u8)
         self.voxel_material = ti.field(dtype=ti.i8)
 
-        self.IOR = ti.field(dtype=ti.f32)
-        self.Att = ti.field(dtype=ti.f32)
+        self.ior = ti.field(dtype=ti.f32)
+        self.atten = ti.field(dtype=ti.f32)
 
-        self.Grad = ti.Vector.field(3, dtype=ti.f32)
+        self.grad = ti.Vector.field(3, dtype=ti.f32)
         
-        self.Irr = ti.field(dtype=ti.f32)
-        self.Loc_dir = ti.Vector.field(3, dtype=ti.f32)        
+        self.irrad = ti.field(dtype=ti.f32)
+        self.loc_dir = ti.Vector.field(3, dtype=ti.f32)        
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -63,12 +62,12 @@ class Renderer:
         ti.root.dense(ti.ijk,
                       self.voxel_grid_res).place(self.voxel_color,
                                                 self.voxel_material,
-                                                self.IOR,
-                                                self.Att,
+                                                self.ior,
+                                                self.atten,
 
-                                                self.Grad,
-                                                self.Irr,
-                                                self.Loc_dir,                                                
+                                                self.grad,
+                                                self.irrad,
+                                                self.loc_dir,                                                
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
@@ -78,7 +77,8 @@ class Renderer:
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
 
-        self.IOR.fill(1.0)
+        self.ior.fill(1.0)
+        self.atten.fill(0.01)
 
     def set_directional_light(self, direction, light_direction_noise,
                               light_color):
@@ -395,7 +395,7 @@ class Renderer:
     def set_voxel(self, idx, mat, color, ior=1.0):
         self.voxel_material[idx] = ti.cast(mat, ti.i8)
         self.voxel_color[idx] = self.to_vec3u(color)
-        self.IOR[idx] = ior
+        self.ior[idx] = ior
 
 
     @ti.func
@@ -404,11 +404,26 @@ class Renderer:
         color = self.voxel_color[ijk]
         return mat, self.to_vec3(color)
     
-    def get_ior_grid(self) -> ti.ScalarField: # Because Taichi functions cannot be called from Python-scope, we could not use ti.func
-        return self.IOR
+    def set_ior(self, ior_field: ti.types.ndarray()): # type: ignore
+        self.ior = ior_field
 
-    def set_grad_field(self, grad_field: ti.types.ndarray()): # type: ignore
-        self.Grad = grad_field
+    def get_ior(self): # Because Taichi functions cannot be called from Python-scope, we could not use ti.func
+        return self.ior
 
-    def get_grad_field(self):
-        return self.Grad
+    def set_grad(self, grad_field: ti.types.ndarray()): # type: ignore
+        self.grad = grad_field
+
+    def get_grad(self):
+        return self.grad
+    
+    def set_atten(self, atten_field: ti.types.ndarray()): # type: ignore
+        self.atten = atten_field
+    
+    def get_atten(self):
+        return self.atten
+    
+    def set_loc_dir(self, loc_dir_field: ti.types.ndarray()): # type: ignore
+        self.loc_dir = loc_dir_field
+
+    def get_loc_dir(self):
+        return self.loc_dir
