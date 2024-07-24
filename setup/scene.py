@@ -1,12 +1,11 @@
 # import time
 # import os
 # from datetime import datetime
+# import __main__
 import numpy as np
 import taichi as ti
 from rendering.renderer import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
-import __main__
-
 
 VOXEL_DX = 1 / 64
 SCREEN_RES = (1280, 720)

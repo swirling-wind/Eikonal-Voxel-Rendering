@@ -1,0 +1,109 @@
+from .scene import Scene
+import taichi as ti
+from taichi.math import *
+import taichi.math as tm
+ti.init(arch=ti.gpu) # debug=True to check boundary access
+
+import numpy as np
+from scipy import ndimage
+import trimesh
+import open3d as o3d
+
+NUM_X, NUM_Y, NUM_Z = 128, 128, 128
+
+GLASS_IOR = 1.5
+LARGE_R, MEDIUM_R = 20, 16
+RED, BLUE, GREY = vec3(0.9, 0, 0.1), vec3(0, 0.5, 1), vec3(0.7, 0.7, 0.7), 
+WHITE, AZURE = vec3(1, 1, 1), vec3(0.4, 0.7, 1)
+
+def load_and_voxelize_mesh(file_path: str, voxel_size=0.005, 
+                           num_x=128, num_y=128, num_z=128, need_rotate=False) -> np.ndarray:
+    target_mesh = trimesh.load(file_path)
+    assert isinstance(target_mesh, trimesh.Trimesh), "Loaded object should be a Trimesh"
+    vertices, faces = target_mesh.vertices, target_mesh.faces
+
+    mesh = o3d.geometry.TriangleMesh()
+    mesh.vertices = o3d.utility.Vector3dVector(vertices)
+    mesh.triangles = o3d.utility.Vector3iVector(faces)
+    mesh.compute_vertex_normals()
+    voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(mesh, voxel_size)
+
+    filled_voxels = np.zeros((num_x, num_y, num_z), dtype=np.uint8)
+    for voxel in voxel_grid.get_voxels():
+        voxel_coord = voxel.grid_index
+        filled_voxels[voxel_coord[0], voxel_coord[1], voxel_coord[2]] = True
+    for y in range(filled_voxels.shape[1]):
+        slice_y = filled_voxels[:, y, :]
+        filled_slice = ndimage.binary_fill_holes(slice_y)
+        filled_voxels[:, y, :] = filled_slice
+
+    if need_rotate:
+        filled_voxels = np.transpose(filled_voxels, (0, 2, 1))  # Transpose from (x, y, z) to (x, z, y)
+        filled_voxels = np.flip(filled_voxels, axis=2)  # Flip y-axis to make the object stand up
+    print("Loaded voxel from:", file_path)
+    print("Loaded Voxel shape:", filled_voxels.shape)  
+    print("Number of filled voxels:", np.sum(filled_voxels))
+    return filled_voxels
+
+def setup_fields(bunny_voxels: np.ndarray, glass_voxels: np.ndarray, num_x: int, num_y: int, num_z: int):
+    bunny_field = ti.field(dtype=ti.u8, shape=(num_x, num_y, num_z))
+    bunny_field.from_numpy(bunny_voxels)
+    glass_field = ti.field(dtype=ti.u8, shape=(num_x, num_y, num_z))
+    glass_field.from_numpy(glass_voxels)
+    return bunny_field, glass_field
+
+@ti.func
+def origin_y(largest: int, r: int):
+    return -(largest-r)-1
+
+def floor_ratio(largest: int) -> float:
+    return -1 / 64 * (largest)
+
+def floor_height(num_y: int, floor_ratio: float) -> int:
+    return int((1+floor_ratio) * num_y / 2)
+
+@ti.func
+def add_ball(r: ti.i32, origin: tm.vec3, color: tm.vec3, mat: ti.i8, glass_ior: float):
+    pad = 1
+    for i, j, k in ti.ndrange((-r-pad, r+pad), (-r-pad, r+pad), (-r-pad, r+pad)):
+        xyz = ivec3(i, j, k)
+        if xyz.dot(xyz) < r**2: 
+            scene.set_voxel(vec3(i, j, k) + origin, mat, color, ior=glass_ior)
+
+@ti.func 
+def add_bunny(bunny_field, origin: tm.vec3, color: tm.vec3, mat: ti.i8, glass_ior: float):
+    for i, j, k in ti.ndrange(NUM_X, NUM_Y, NUM_Z):
+        if bunny_field[i, j, k] == 1:
+            scene.set_voxel(vec3(i, j, k) + origin, mat, color, ior=glass_ior)
+
+@ti.func
+def add_glass(glass_field, origin: tm.vec3, color: tm.vec3, mat: ti.i8, glass_ior: float):
+    for i, j, k in ti.ndrange(NUM_X, NUM_Y, NUM_Z):
+        if glass_field[i, j, k] == 1:
+            scene.set_voxel(vec3(i, j, k) + origin, mat, color, ior=glass_ior)
+
+@ti.kernel
+def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float): # type: ignore
+    add_ball(LARGE_R, vec3(-32, origin_y(LARGE_R, LARGE_R), 0), RED, 1, GLASS_IOR)
+    add_ball(MEDIUM_R, vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), BLUE, 1, GLASS_IOR)
+    add_bunny(bunny_field, vec3(3, floor_ratio * 64, 0), GREY, 1, GLASS_IOR)
+    add_glass(glass_field, vec3(3, floor_ratio * 64, 0), WHITE, 1, GLASS_IOR)
+
+
+def setup_voxel_scene():
+    global scene, bunny_field, glass_field
+    bunny_voxels = load_and_voxelize_mesh('./assets/bun_zipper_res4.ply', 0.004, NUM_X, NUM_Y, NUM_Z)
+    glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", 0.07, NUM_X, NUM_Y, NUM_Z, need_rotate=True)
+    bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, NUM_X, NUM_Y, NUM_Z)
+
+    scene = Scene(exposure=1)
+    scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
+    scene.set_background_color((1, 0.9, 0.9))
+
+    floor_ratio_val = floor_ratio(LARGE_R)
+    print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height(NUM_Y, floor_ratio_val))
+    scene.set_floor(height=floor_ratio_val, color=AZURE)
+
+    initialize_voxels(bunny_field, glass_field, floor_ratio_val)
+    return scene, floor_height(NUM_Y, floor_ratio_val)
+
