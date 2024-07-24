@@ -20,7 +20,6 @@ def compute_ior_gradient(ior_field: np.ndarray) -> np.ndarray:
     grad_xyz = np.gradient(ior_field)
     return np.stack(grad_xyz, axis=-1)
 
-
 @torch.jit.script
 def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Tensor, grad_xyz: torch.Tensor, IOR: torch.Tensor, delta_t: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     indices = pos.int()
@@ -50,40 +49,38 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
     return new_pos, new_dir, new_within_mask
 
 
-def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
+def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, atten_grid: np.ndarray,
                                    initial_wavefront_pos: np.ndarray, initial_wavefront_dir: np.ndarray, 
                                    device: torch.device, 
                                    plotter: Plotter,
-                                   num_steps: int = 100, delta_t: float = 1.0, num_show_images: int = 3) -> tuple[np.ndarray, np.ndarray]:
+                                   num_steps: int = 100, delta_t: float = 1.0, num_show_images: int = 3) -> np.ndarray:
     
     stride = max(num_steps // (num_show_images-1), 1)
     show_indices =  [i for i in range(stride, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
 
     cur_pos = torch.tensor(initial_wavefront_pos, device=device)
     cur_dir = torch.tensor(initial_wavefront_dir, device=device)
-    cur_mask = torch.ones(initial_wavefront_pos.shape[0], dtype=torch.bool, device=device)
+    within_mask = torch.ones(initial_wavefront_pos.shape[0], dtype=torch.bool, device=device)
     
     grad_tensor = torch.tensor(grad_xyz, device=device)
     ior_tensor = torch.tensor(ior_field, device=device)
+    atten_tensor = torch.tensor(atten_grid, device=device)
 
     irradiance_grid = torch.zeros(ior_field.shape, device=device)
-    local_directions = torch.zeros((ior_field.shape[0], ior_field.shape[1], ior_field.shape[2], 3), device=device)
 
     for cur_step in range(num_steps):
-        new_positions, new_directions, new_mask = update_wavefront(cur_pos, cur_dir, cur_mask, grad_tensor, ior_tensor, delta_t)
+        new_positions, new_directions, within_mask = update_wavefront(cur_pos, cur_dir, within_mask, grad_tensor, ior_tensor, delta_t)
         cur_pos = new_positions
         cur_dir = new_directions
-        cur_mask = new_mask
 
-        indices = cur_pos.int()[cur_mask]
+        indices = cur_pos.int()[within_mask]
         unique_indices, counts = torch.unique(indices, return_counts=True, dim=0)
         irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
 
         if num_show_images > 0 and cur_step in show_indices:
             plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {indices.shape[0]})")
 
-    return irradiance_grid.cpu().numpy(), local_directions.cpu().numpy()
-
+    return irradiance_grid.cpu().numpy()
 
 # def run_monte_carlo_simulation(num_iterations: int, num_samplers_per_voxel: int = 8, pos_perturbation_scale: float = 0.45) -> np.ndarray:
 #     avg_irradiance_grid = None    
