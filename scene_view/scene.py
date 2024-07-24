@@ -1,10 +1,10 @@
-import time
-import os
-from datetime import datetime
+# import time
+# import os
+# from datetime import datetime
 import numpy as np
 import taichi as ti
-from renderer import Renderer
-from math_utils import np_normalize, np_rotate_matrix
+from rendering.renderer import Renderer
+from common.math_utils import np_normalize, np_rotate_matrix
 import __main__
 
 
