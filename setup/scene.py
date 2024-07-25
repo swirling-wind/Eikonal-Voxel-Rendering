@@ -188,6 +188,7 @@ class Scene:
         
         self.window.destroy()
     
+    #### IOR ####
     @property
     def ior(self) -> np.ndarray:
         ior_grid = self.renderer.ior
@@ -200,34 +201,42 @@ class Scene:
     def ior(self, ior_grid: ti.types.ndarray()): # type: ignore
         self.renderer.ior = ior_grid
 
+    #### Gradient ####
     @property
     def gradient(self) -> np.ndarray:
         grad_grid = self.renderer.grad
-        if isinstance(grad_grid, np.ndarray):
-            return grad_grid
-        else:
-            return grad_grid.to_numpy()
+        return grad_grid if isinstance(grad_grid, np.ndarray) else grad_grid.to_numpy()
 
     @gradient.setter
     def gradient(self, grad_field: ti.types.ndarray()): # type: ignore
         self.renderer.grad = grad_field
 
+    #### Attenuation ####
     @property
     def attenuation(self) -> np.ndarray:
         atten_grid = self.renderer.atten
-        if isinstance(atten_grid, np.ndarray):
-            return atten_grid
-        else:
-            return atten_grid.to_numpy()
+        return atten_grid if isinstance(atten_grid, np.ndarray) else atten_grid.to_numpy()
 
     @attenuation.setter
     def attenuation(self, atten_field: ti.types.ndarray()): # type: ignore
         self.renderer.atten = atten_field
 
+    #### Loc Dir ####
     @property
-    def loc_dir(self):
-        return self.renderer.loc_dir
+    def local_diretion(self) -> np.ndarray:
+        local_direction = self.renderer.loc_dir
+        return local_direction if isinstance(local_direction, np.ndarray) else local_direction.to_numpy()
 
-    @loc_dir.setter
-    def loc_dir(self, loc_dir_field: ti.types.ndarray()): # type: ignore
+    @local_diretion.setter
+    def local_diretion(self, loc_dir_field: ti.types.ndarray()): # type: ignore
         self.renderer.loc_dir = loc_dir_field
+
+    #### Irradiance ####
+    @property
+    def irradiance(self) -> np.ndarray:
+        irradiance_field = self.renderer.irrad
+        return irradiance_field if isinstance(irradiance_field, np.ndarray) else irradiance_field.to_numpy()
+    
+    @irradiance.setter
+    def irradiance(self, irrad_field: ti.types.ndarray()): # type: ignore
+        self.renderer.irrad = irrad_field
