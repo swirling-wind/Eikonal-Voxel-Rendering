@@ -82,8 +82,8 @@ def add_glass(glass_field, origin: tm.vec3, color: tm.vec3, mat: ti.i8, voxel_io
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
     add_ball(LARGE_R, vec3(-32, origin_y(LARGE_R, LARGE_R), 0), RED, 1, GLASS_IOR)
     add_ball(MEDIUM_R, vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), BLUE, 1, GLASS_IOR)
-    # add_bunny(bunny_field, vec3(3, floor_ratio * 64, 0), GREY, 1, GLASS_IOR, num_x, num_y, num_z)
-    # add_glass(glass_field, vec3(-24, floor_ratio * 64, -128), WHITE, 1, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
+    add_bunny(bunny_field, vec3(3, floor_ratio * 64, 0), GREY, 1, GLASS_IOR, num_x, num_y, num_z)
+    add_glass(glass_field, vec3(-24, floor_ratio * 64, -128), WHITE, 1, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
 
 
 @ti.kernel
