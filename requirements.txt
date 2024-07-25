@@ -1,0 +1,9 @@
+# Python 3.11 required
+ipympl
+taichi==1.7.1
+torch
+trimesh
+matplotlib
+open3d
+numpy
+scipy
