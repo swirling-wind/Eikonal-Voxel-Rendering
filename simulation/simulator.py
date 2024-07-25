@@ -3,7 +3,7 @@ from common.plot import Plotter
 import numpy as np
 import torch
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
 
 def generate_initial_wavefront(num_samplers_per_voxel : int, pos_perturbation_scale : float, num_x=128, num_y=128, num_z=128) -> tuple[np.ndarray, np.ndarray]:
@@ -51,26 +51,26 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
 
 def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, atten_grid: np.ndarray,
                                    initial_wavefront_pos: np.ndarray, initial_wavefront_dir: np.ndarray, 
-                                   device: torch.device, plotter: Plotter,
+                                   plotter: Plotter,
                                    num_steps: int = 100, step_size: float = 1.0, num_show_images: int = 3) -> np.ndarray:
     
     stride = max(num_steps // (num_show_images-1), 1)
     plot_step_indices =  [i for i in range(stride, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
 
     # Initialize the wavefront position and direction (initial_wavefront_pos.shape[0] = 30000 or highter) and the mask to keep track of the wavefront positions within the IOR boundaries
-    cur_pos = torch.tensor(initial_wavefront_pos, device=device)
-    cur_dir = torch.tensor(initial_wavefront_dir, device=device)
-    within_mask = torch.ones(initial_wavefront_pos.shape[0], dtype=torch.bool, device=device)
+    cur_pos = torch.tensor(initial_wavefront_pos, device=DEVICE)
+    cur_dir = torch.tensor(initial_wavefront_dir, device=DEVICE)
+    within_mask = torch.ones(initial_wavefront_pos.shape[0], dtype=torch.bool, device=DEVICE)
 
     # Initialize the all photons' absorption A to zero
-    photon_energy = torch.ones(initial_wavefront_pos.shape[0], device=device)
+    photon_energy = torch.ones(initial_wavefront_pos.shape[0], device=DEVICE)
 
     # Convert (128,128,128) voxel grids to tensors
-    voxel_ior = torch.tensor(ior_field, device=device)
-    voxel_grad = torch.tensor(grad_xyz, device=device)
-    voxel_atten = torch.tensor(atten_grid, device=device)
+    voxel_ior = torch.tensor(ior_field, device=DEVICE)
+    voxel_grad = torch.tensor(grad_xyz, device=DEVICE)
+    voxel_atten = torch.tensor(atten_grid, device=DEVICE)
 
-    irradiance_grid = torch.zeros(ior_field.shape, device=device)
+    irradiance_grid = torch.zeros(ior_field.shape, device=DEVICE)
 
     for cur_step in range(num_steps):
         new_positions, new_directions, within_mask = update_wavefront(cur_pos, cur_dir, within_mask, voxel_grad, voxel_ior, step_size)
@@ -84,7 +84,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
 
         # - Accumulate each attenuated photon energy to its corresponding voxel in the irradiance grid. The inverse_indices is used to sum the energy of the same photon that is scattered to multiple voxels
         unique_indices, inverse_indices = torch.unique(within_indices, return_inverse=True, dim=0)
-        energy_sum = torch.zeros(unique_indices.shape[0], device=device)
+        energy_sum = torch.zeros(unique_indices.shape[0], device=DEVICE)
         energy_sum.scatter_add_(0, inverse_indices, photon_energy[within_mask])
         irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += energy_sum
 
