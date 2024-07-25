@@ -3,5 +3,7 @@
 /.codemap
 
 *.pyc
+*.zip
 
 imgui.ini
+

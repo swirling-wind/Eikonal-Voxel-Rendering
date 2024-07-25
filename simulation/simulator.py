@@ -52,7 +52,7 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
 def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, atten_grid: np.ndarray,
                                    initial_wavefront_pos: np.ndarray, initial_wavefront_dir: np.ndarray, 
                                    plotter: Plotter,
-                                   num_steps: int = 100, step_size: float = 1.0, num_show_images: int = 3) -> np.ndarray:
+                                   num_steps: int = 100, step_size: float = 1.0, num_show_images: int = 3) -> tuple[np.ndarray, np.ndarray]:
     
     stride = max(num_steps // (num_show_images-1), 1)
     plot_step_indices =  [i for i in range(stride, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
@@ -72,6 +72,10 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
 
     irradiance_grid = torch.zeros(ior_field.shape, device=DEVICE)
 
+    # for computing local light direction vector field. Each voxel choose the direction of the photon with the highest energy
+    location_direction_grid = torch.zeros((*ior_field.shape, 3), device=DEVICE)
+    cur_highest_energy = torch.zeros(ior_field.shape, device=DEVICE)
+
     for cur_step in range(num_steps):
         new_positions, new_directions, within_mask = update_wavefront(cur_pos, cur_dir, within_mask, voxel_grad, voxel_ior, step_size)
         cur_pos = new_positions
@@ -88,14 +92,24 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
         energy_sum.scatter_add_(0, inverse_indices, photon_energy[within_mask])
         irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += energy_sum
 
-        # # - Or Simply count the number of photons at each voxel and add the count to the irradiance grid
-        # unique_indices, counts = torch.unique(within_indices, return_counts=True, dim=0)
-        # irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
+        # - Update the local light direction vector field
+        # Step 1: Find the indices where the current energy is higher than the stored highest energy
+        update_mask = photon_energy[within_mask] > cur_highest_energy[within_indices[:, 0], within_indices[:, 1], within_indices[:, 2]]
+        update_indices = within_indices[update_mask]
 
+        # Step 2: Update the highest energy for these indices
+        cur_highest_energy[update_indices[:, 0], update_indices[:, 1], update_indices[:, 2]] = photon_energy[within_mask][update_mask]
+
+        # Step 3: Update the direction for these indices
+        location_direction_grid[update_indices[:, 0], update_indices[:, 1], update_indices[:, 2]] = cur_dir[within_mask][update_mask]
+        
         if num_show_images > 0 and cur_step in plot_step_indices:
             plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {within_indices.shape[0]})")
 
-    return irradiance_grid.cpu().numpy()
+    # Normalize the direction vectors after the simulation
+    direction_lengths = torch.norm(location_direction_grid, dim=-1, keepdim=True)
+    location_direction_grid /= torch.where(direction_lengths > 0, direction_lengths, torch.ones_like(direction_lengths))
+    return irradiance_grid.cpu().numpy(), location_direction_grid.cpu().numpy()
 
 # def run_monte_carlo_simulation(num_iterations: int, num_samplers_per_voxel: int = 8, pos_perturbation_scale: float = 0.45) -> np.ndarray:
 #     avg_irradiance_grid = None    

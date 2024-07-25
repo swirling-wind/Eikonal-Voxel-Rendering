@@ -115,3 +115,79 @@ class Plotter:
         plt.tight_layout()
         plt.show()
         
+
+    def visualize_local_direction_grid_slices(self, direction_grid, num_slices=8, z_start=None, z_end=None):
+        if z_start is None:
+            z_start = 0
+        if z_end is None:
+            z_end = direction_grid.shape[2] - 1
+        
+        z_indices = np.linspace(z_start, z_end, num_slices, dtype=int)
+        num_rows = (num_slices + 1) // 2
+        num_cols = 2
+        
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(12, 4 * num_rows))
+        axes = axes.flatten()
+        
+        for i, z_index in enumerate(z_indices):
+            ax = axes[i]
+            
+            slice_data = np.transpose(direction_grid[:, :, z_index], axes=(1, 0, 2))
+            y, x = np.meshgrid(np.arange(slice_data.shape[0]), np.arange(slice_data.shape[1]), indexing='ij')
+            u, v = slice_data[..., 0], slice_data[..., 1]
+            
+            ax.quiver(x, y, u, v, angles='xy', scale_units='xy', scale=0.9)
+            ax.set_title(f"Local Direction at Z = {z_index}")
+            ax.set_xlabel("X Axis")
+            ax.set_ylabel("Y Axis")
+            ax.set_aspect('equal')
+        
+        for ax in axes[len(z_indices):]:
+            ax.axis('off')
+        
+        plt.tight_layout()
+        plt.show()
+
+    def plot_local_direction_grid_slices(self, direction_grid, num_slices=8, z_start=None, z_end=None, stream_plot=True, subsample_rate=3):
+        if z_start is None:
+            z_start = 0
+        if z_end is None:
+            z_end = direction_grid.shape[2] - 1
+        
+        z_indices = np.linspace(z_start, z_end, num_slices, dtype=int)
+        num_rows = (num_slices + 1) // 2
+        num_cols = 2
+        
+        fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5 * num_rows))
+        axes = axes.flatten()
+        
+        for i, z_index in enumerate(z_indices):
+            ax = axes[i]
+            
+            slice_data = np.transpose(direction_grid[:, :, z_index], axes=(1, 0, 2))
+            y, x = np.meshgrid(np.arange(slice_data.shape[0]), np.arange(slice_data.shape[1]), indexing='ij')
+            u, v = slice_data[..., 0], slice_data[..., 1]
+            
+            # 降采样
+            x_subsampled = x[::subsample_rate, ::subsample_rate]
+            y_subsampled = y[::subsample_rate, ::subsample_rate]
+            u_subsampled = u[::subsample_rate, ::subsample_rate]
+            v_subsampled = v[::subsample_rate, ::subsample_rate]
+            
+            # 绘制箭头
+            ax.quiver(x_subsampled, y_subsampled, u_subsampled, v_subsampled, angles='xy', scale_units='xy', scale=0.5)
+            
+            # 绘制流线图
+            if stream_plot:
+                ax.streamplot(x, y, u, v, density=1, linewidth=0.5, color='gray', arrowstyle='->')
+            
+            ax.set_title(f"Local Direction at Z = {z_index}")
+            ax.set_xlabel("X Axis")
+            ax.set_ylabel("Y Axis")
+            ax.set_aspect('equal')
+        
+        for ax in axes[len(z_indices):]:
+            ax.axis('off')
+        
+        plt.tight_layout()
+        plt.show()
