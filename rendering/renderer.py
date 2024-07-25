@@ -403,27 +403,3 @@ class Renderer:
         mat = self.voxel_material[ijk]
         color = self.voxel_color[ijk]
         return mat, self.to_vec3(color)
-    
-    def set_ior(self, ior_field: ti.types.ndarray()): # type: ignore
-        self.ior = ior_field
-
-    def get_ior(self): # Because Taichi functions cannot be called from Python-scope, we could not use ti.func
-        return self.ior
-
-    def set_grad(self, grad_field: ti.types.ndarray()): # type: ignore
-        self.grad = grad_field
-
-    def get_grad(self):
-        return self.grad
-    
-    def set_atten(self, atten_field: ti.types.ndarray()): # type: ignore
-        self.atten = atten_field
-    
-    def get_atten(self):
-        return self.atten
-    
-    def set_loc_dir(self, loc_dir_field: ti.types.ndarray()): # type: ignore
-        self.loc_dir = loc_dir_field
-
-    def get_loc_dir(self):
-        return self.loc_dir

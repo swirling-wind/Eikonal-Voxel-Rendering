@@ -82,13 +82,13 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
         attenuation_coef = voxel_atten[within_indices[:, 0], within_indices[:, 1], within_indices[:, 2]]
         photon_energy[within_mask] *= torch.exp(-attenuation_coef)
 
-        # Accumulate the attenuated photon energy to the irradiance grid
+        # - Accumulate each attenuated photon energy to its corresponding voxel in the irradiance grid. The inverse_indices is used to sum the energy of the same photon that is scattered to multiple voxels
         unique_indices, inverse_indices = torch.unique(within_indices, return_inverse=True, dim=0)
         energy_sum = torch.zeros(unique_indices.shape[0], device=device)
         energy_sum.scatter_add_(0, inverse_indices, photon_energy[within_mask])
         irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += energy_sum
 
-        # Currrently simply count the number of photons at each voxel and add the count to the irradiance grid
+        # # - Or Simply count the number of photons at each voxel and add the count to the irradiance grid
         # unique_indices, counts = torch.unique(within_indices, return_counts=True, dim=0)
         # irradiance_grid[unique_indices[:, 0], unique_indices[:, 1], unique_indices[:, 2]] += counts.float()
 

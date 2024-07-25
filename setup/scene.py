@@ -187,33 +187,47 @@ class Scene:
             self.window.show()
         
         self.window.destroy()
-
-    def set_ior(self, ior_grid: ti.types.ndarray()): # type: ignore
-        self.renderer.set_ior(ior_grid)
-
-    def get_ior(self) -> np.ndarray:
-        ior_grid = self.renderer.get_ior()
+    
+    @property
+    def ior(self) -> np.ndarray:
+        ior_grid = self.renderer.ior
         if isinstance(ior_grid, np.ndarray):
             return ior_grid
         else:
             return ior_grid.to_numpy()
-    
-    def set_gradient(self, grad_field: ti.types.ndarray()): # type: ignore
-        self.renderer.set_grad(grad_field)
 
-    def get_gradient(self) -> np.ndarray:
-        grad_grid = self.renderer.get_grad()
+    @ior.setter
+    def ior(self, ior_grid: ti.types.ndarray()): # type: ignore
+        self.renderer.ior = ior_grid
+
+    @property
+    def gradient(self) -> np.ndarray:
+        grad_grid = self.renderer.grad
         if isinstance(grad_grid, np.ndarray):
             return grad_grid
         else:
             return grad_grid.to_numpy()
-    
-    def set_attenuation(self, atten_field: ti.types.ndarray()): # type: ignore
-        self.renderer.set_atten(atten_field)
 
-    def get_attenuation(self) -> np.ndarray:
-        atten_grid = self.renderer.get_atten()
+    @gradient.setter
+    def gradient(self, grad_field: ti.types.ndarray()): # type: ignore
+        self.renderer.grad = grad_field
+
+    @property
+    def attenuation(self) -> np.ndarray:
+        atten_grid = self.renderer.atten
         if isinstance(atten_grid, np.ndarray):
             return atten_grid
         else:
             return atten_grid.to_numpy()
+
+    @attenuation.setter
+    def attenuation(self, atten_field: ti.types.ndarray()): # type: ignore
+        self.renderer.atten = atten_field
+
+    @property
+    def loc_dir(self):
+        return self.renderer.loc_dir
+
+    @loc_dir.setter
+    def loc_dir(self, loc_dir_field: ti.types.ndarray()): # type: ignore
+        self.renderer.loc_dir = loc_dir_field
