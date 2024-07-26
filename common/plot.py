@@ -85,7 +85,7 @@ class Plotter:
         fig.colorbar(mappable, ax=ax, shrink=0.5, aspect=5)  # Add colorbar
         plt.show()
 
-    def plot_irradiance_slices(self, radiometric_grid: np.ndarray, threshold=3.0, num_slices=8, z_start=None, z_end=None):  
+    def plot_irradiance_slices(self, radiometric_grid: np.ndarray, threshold=3.0, num_slices=4, z_start=None, z_end=None):  
         if z_start is None:
             z_start = 0
         if z_end is None:
