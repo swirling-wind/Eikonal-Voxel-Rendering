@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from simulation.simulator import DEVICE
+import os
 
 class IrradianceNet(nn.Module):
     def __init__(self):
@@ -22,15 +23,24 @@ class IrradianceNet(nn.Module):
     def forward(self, x):
         return self.model(x).squeeze()
     
-
 class MLP:
-    def __init__(self, irradiance: np.ndarray, floor_height: int, num_xyz: tuple[int, int, int], val_ratio=0.1):
+    def __init__(self, irradiance: np.ndarray, floor_height: int, num_xyz: tuple[int, int, int], num_epoches=50, load_model_file=True, val_ratio=0.1):
         self.irradiance = irradiance
         self.floor_height = floor_height
         self.num_xyz = num_xyz
         self.val_ratio = val_ratio
         self.train_inputs, self.val_inputs, self.train_targets, self.val_targets = self._prepare_data()
         self.model = IrradianceNet().to(DEVICE)
+
+        model_path = os.path.join(os.getcwd(), "data", "MLP(Irrad-" + str(num_epoches) + "-epoches).pt")
+        if load_model_file == False or (not os.path.exists(model_path)):
+            if not os.path.exists(model_path):
+                print("The model file \"{}\" does not exist. Training the model...".format(model_path.split("\\")[-1]))
+            self.train(num_epoches)
+            torch.save(self.model.state_dict(), model_path)
+        else:
+            self.model.load_state_dict(torch.load(model_path))
+            print("Model directly loaded from \"{}\"".format(model_path.split("\\")[-1]))
 
     def _prepare_data(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         irradiance_tensor = torch.tensor(self.irradiance[:, self.floor_height:, :], dtype=torch.float32)
