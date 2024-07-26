@@ -4,7 +4,7 @@
 # import __main__
 import numpy as np
 import taichi as ti
-from rendering.renderer import Renderer
+from render.renderer import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
