@@ -91,7 +91,7 @@ class VoxelFitting(Dataset):
     def __init__(self, voxel_grid: np.ndarray, sidelength: int):
         super().__init__()
         voxel_tensor = get_tensor_from_grid(voxel_grid)
-        self.voxels = voxel_tensor.view(-1, 1)
+        self.voxels = voxel_tensor.view(1, sidelength, sidelength, sidelength).permute(0, 2, 3, 1)
         self.coords = get_coord_grid(sidelength, dim=3)
 
     def __len__(self):
