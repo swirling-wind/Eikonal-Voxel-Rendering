@@ -4,6 +4,7 @@
 
 *.pyc
 *.zip
+*.7z
 
 imgui.ini
 
