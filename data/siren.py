@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader, Dataset
 
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 import numpy as np
+from simulation.simulator import DEVICE
+import os
 
 class SineLayer(nn.Module):
     # See paper sec. 3.2, final paragraph, and supplement Sec. 1.5 for discussion of omega_0.
@@ -39,7 +41,7 @@ class SineLayer(nn.Module):
         return torch.sin(self.omega_0 * self.linear(input))
 
 class Siren(nn.Module):
-    def __init__(self, in_features: int, hidden_features: int, hidden_layers: int, out_features: int, outermost_linear: bool=False,
+    def __init__(self, in_features: int, hidden_features: int, hidden_layers: int, out_features: int, outermost_linear: bool=True,
                  first_omega_0: int=30, hidden_omega_0: float=30.0):
         super().__init__()
 
@@ -66,10 +68,8 @@ class Siren(nn.Module):
         self.net = nn.Sequential(*self.net)
 
     def forward(self, coords):
-        coords = coords.clone().detach().requires_grad_(True) # allows to take derivative w.r.t. input
-        assert isinstance(self.net, nn.Sequential)
-        output = self.net(coords)
-        return output, coords
+        output = self.net(coords) # type: ignore
+        return output
 
 def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
     '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
@@ -92,13 +92,13 @@ class VoxelFitting(Dataset):
         super().__init__()
         voxel_tensor = get_tensor_from_grid(voxel_grid)
         self.voxels = voxel_tensor.view(-1, 1)
-        self.coords = get_coord_grid(sidelength, 3)
+        self.coords = get_coord_grid(sidelength, dim=3)
 
     def __len__(self):
         return 1
 
-    def __getitem__(self, idx: int):
-        if idx > 0: raise IndexError 
+    def __getitem__(self, idx):
+        if idx > 0: raise IndexError
         return self.coords, self.voxels
 
 class ImageFitting(Dataset):
@@ -106,7 +106,7 @@ class ImageFitting(Dataset):
         super().__init__()
         img = get_tensor_from_grid(grid)
         self.pixels = img.permute(1, 2, 0).view(-1, 1)
-        self.coords = get_coord_grid(sidelength, 2)
+        self.coords = get_coord_grid(sidelength, dim=2)
 
     def __len__(self):
         return 1
@@ -115,4 +115,3 @@ class ImageFitting(Dataset):
         if idx > 0: raise IndexError
             
         return self.coords, self.pixels
-    
