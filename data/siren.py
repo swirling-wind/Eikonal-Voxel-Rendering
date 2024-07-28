@@ -78,16 +78,17 @@ def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
     mgrid = mgrid.reshape(-1, dim)
     return mgrid
 
-def get_tensor_from_grid(voxel_grid) -> torch.Tensor:
+def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
     transform = Compose([
         ToTensor(),
         Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
     ])
     voxel_tensor = transform(voxel_grid)
+    assert isinstance(voxel_tensor, torch.Tensor), "Expected a tensor after transformation"
     return voxel_tensor
 
 class VoxelFitting(Dataset):
-    def __init__(self, voxel_grid, sidelength):
+    def __init__(self, voxel_grid: np.ndarray, sidelength: int):
         super().__init__()
         voxel_tensor = get_tensor_from_grid(voxel_grid)
         self.voxels = voxel_tensor.view(-1, 1)
@@ -96,11 +97,9 @@ class VoxelFitting(Dataset):
     def __len__(self):
         return 1
 
-    def __getitem__(self, idx):    
-        if idx > 0: 
-            raise IndexError
+    def __getitem__(self, idx: int):
+        if idx > 0: raise IndexError 
         return self.coords, self.voxels
-
 
 class ImageFitting(Dataset):
     def __init__(self, grid, sidelength: int):
