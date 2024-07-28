@@ -6,15 +6,18 @@ def irrad_loc_dir_path(sampler_multiplier: int) -> str:
     return grid_path
 
 def save_irrad_loc_dir(irrad: np.ndarray, loc_dir: np.ndarray, sampler_multiplier: int):
-    np.savez_compressed(irrad_loc_dir_path(sampler_multiplier), irrad=irrad, loc_dir=loc_dir)
+    file_path = irrad_loc_dir_path(sampler_multiplier)
+    np.savez_compressed(file_path, irrad=irrad, loc_dir=loc_dir)
 
 def load_irrad_loc_dir(sampler_multiplier: int) -> tuple[np.ndarray, np.ndarray]:
-    npzfile = np.load(irrad_loc_dir_path(sampler_multiplier))
-    print("[ Loaded ] irradiance and local direction from", irrad_loc_dir_path(sampler_multiplier).split("/")[-1])
+    file_path = irrad_loc_dir_path(sampler_multiplier)
+    npzfile = np.load(file_path)
+    print("[ Loaded ] irradiance and local direction from", file_path.split("/")[-1])
     return npzfile['irrad'], npzfile['loc_dir']
 
 def irrad_loc_dir_save_exists(sampler_multiplier: int) -> bool:
-    if os.path.exists(irrad_loc_dir_path(sampler_multiplier)):
+    file_path = irrad_loc_dir_path(sampler_multiplier)
+    if os.path.exists(file_path):
         return True
     else:
         print("[ Not found ] irradiance and local direction. Start simulation...")

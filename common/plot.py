@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 
-PLOT_STRIDE_LENGTH = 709
+PLOT_STRIDE_LENGTH = 709 # 293 # 
 FIG_SIZE = (5, 5)
 
 def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
