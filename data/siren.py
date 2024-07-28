@@ -71,13 +71,6 @@ class Siren(nn.Module):
         output = self.net(coords) # type: ignore
         return output
 
-def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
-    '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
-    tensors = tuple(dim * [torch.linspace(-1, 1, steps=sidelen)])
-    mgrid = torch.stack(torch.meshgrid(*tensors, indexing='ij'), dim=-1)
-    mgrid = mgrid.reshape(-1, dim)
-    return mgrid
-
 def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
     transform = Compose([
         ToTensor(),
@@ -86,6 +79,13 @@ def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
     voxel_tensor = transform(voxel_grid)
     assert isinstance(voxel_tensor, torch.Tensor), "Expected a tensor after transformation"
     return voxel_tensor
+
+def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
+    '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
+    tensors = tuple(dim * [torch.linspace(-1, 1, steps=sidelen)])
+    mgrid = torch.stack(torch.meshgrid(*tensors, indexing='ij'), dim=-1)
+    mgrid = mgrid.reshape(-1, dim)
+    return mgrid
 
 class VoxelFitting(Dataset):
     def __init__(self, voxel_grid: np.ndarray, sidelength: int):
