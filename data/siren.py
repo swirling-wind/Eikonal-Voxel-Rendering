@@ -129,16 +129,29 @@ import matplotlib.pyplot as plt
 from data.siren import *
 
 class ImageFitting(Dataset):
-    def __init__(self, grid, sidelength: int):
+    def __init__(self, dataset, sidelength: tuple):
         super().__init__()
-        img = get_tensor_from_grid(grid)
-        self.pixels = img.permute(1, 2, 0).view(-1, 1)
-        self.coords = get_coord_grid(sidelength, dim=2)
 
+        # self.coords = get_coord_grid(sidelength, dim=2)
+        # img = get_tensor_from_grid(dataset)
+        # self.pixels = img.permute(1, 2, 0).view(-1, 1)
+        
+
+
+
+        self.coords = get_mgrid(sidelength, dim=2)
+        self.transform = Compose([
+            Resize(sidelength),
+            ToTensor(),
+            Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
+        ])
+        self.dataset = dataset
+        img = self.transform(self.dataset)
+        self.pixels = img.permute(1, 2, 0).view(-1, 1)
+        
     def __len__(self):
         return 1
 
     def __getitem__(self, idx):    
-        if idx > 0: raise IndexError
-            
+        
         return self.coords, self.pixels
