@@ -101,20 +101,27 @@ class VoxelFitting(Dataset):
         if isinstance(sidelength, int):
             sidelength = (sidelength, sidelength, sidelength)
 
-        self.coords = get_mgrid(sidelength, dim=3)
+        self.coords = get_mgrid(sidelength, dim=3).reshape(-1, 3)
 
         self.transform = Compose([
             ToTensor(),
         ])
         irrad_grid = self.transform(voxel_grid)
-        self.voxels = irrad_grid.view(1, *sidelength).permute(0, 2, 3, 1) # type: ignore
+        self.voxels = irrad_grid.view(1, *sidelength).permute(0, 2, 3, 1).reshape(-1) # type: ignore
 
+    # def __len__(self):
+    #     return 1
+
+    # def __getitem__(self, idx):
+    #     if idx > 0: raise IndexError
+    #     return self.coords, self.voxels
+    
     def __len__(self):
-        return 1
+        return len(self.coords)
 
     def __getitem__(self, idx):
-        if idx > 0: raise IndexError
-        return self.coords, self.voxels
+        return self.coords[idx], self.voxels[idx]
+
 
 class ImageFitting(Dataset):
     def __init__(self, dataset, sidelength: int|tuple):
