@@ -128,24 +128,37 @@ class ImageFitting(Dataset):
         return self.coords, self.pixels
     
 class SirenFitter:
-    def __init__(self, input_arr: np.ndarray, floor_heigh: int, sampler_multiplier: int,
+    def __init__(self, input_arr: np.ndarray, floor_height: int, sampler_multiplier: int,
                  hidden_features: int = 256, hidden_layers: int = 3, omega: int = 20):
-        self.floor_height = floor_heigh
-        self.input_arr = input_arr[:, floor_heigh:, :]
+        self.floor_height = floor_height
+        self.sample_multiplier = sampler_multiplier
+        self.input_arr = input_arr[:, floor_height:, :]
         self.cropped_shape = self.input_arr.shape
-
+        self.omega = omega
         self.siren = Siren(in_features=3, out_features=1, 
                            hidden_features=hidden_features, hidden_layers=hidden_layers, 
                            outermost_linear=True,
                            first_omega_0=omega, hidden_omega_0=omega)
     
-    def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, patience: int = 5, show_epoch_interval: int = 5):
+    def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 5, show_epoch_interval: int = 5):
+        model_path = os.path.join(os.getcwd(), "data", "saves", f"SIREN(Irrad)({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega} omega).pt")
+        if load_file == False or (not os.path.exists(model_path)):     
+            if not os.path.exists(model_path):
+                print("[ Not found ] SIREN model file \"{}\" does not exist. Start training the model...".format(model_path.split("\\")[-1]))
+            self.train(total_epochs, batch_size, lr, patience, show_epoch_interval)
+            torch.save(self.siren.state_dict(), model_path)
+        else:
+            self.siren.load_state_dict(torch.load(model_path))
+            self.siren.to(DEVICE)
+            print("[ Loaded ] SIREN model from \"{}\"".format(model_path.split("\\")[-1]))
+    
+    def train(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, patience: int = 5, show_epoch_interval: int = 5):           
         torch.cuda.empty_cache()
         irrad_data = VoxelFitting(self.input_arr, sidelength=self.input_arr.shape)
         dataloader = DataLoader(irrad_data, batch_size, sampler=RandomSampler(irrad_data),
                                 pin_memory=True)
 
-        self.siren.cuda()
+        self.siren.to(DEVICE)
         optim = torch.optim.Adam(lr=lr, params=self.siren.parameters())
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode='min', factor=0.2, patience=patience)
 
@@ -153,7 +166,7 @@ class SirenFitter:
         for cur_epoch in range(total_epochs):
             epoch_loss = 0
             for model_input, ground_truth in dataloader:
-                model_input, ground_truth = model_input.cuda(), ground_truth.cuda()
+                model_input, ground_truth = model_input.to(DEVICE), ground_truth.to(DEVICE)
                 model_output = self.siren(model_input)
                 model_output = model_output.view(ground_truth.shape)
                 loss = ((model_output - ground_truth) ** 2).mean()
@@ -171,7 +184,7 @@ class SirenFitter:
 
     def infer(self, pad: bool = True) -> np.ndarray:
         torch.cuda.empty_cache()
-        infer_coord = get_mgrid(self.cropped_shape, dim=3).cuda()
+        infer_coord = get_mgrid(self.cropped_shape, dim=3).to(DEVICE)
         self.siren.eval()
         with torch.no_grad():
             infer_output: torch.Tensor = self.siren(infer_coord).view(self.cropped_shape).detach()
