@@ -95,23 +95,6 @@ def get_mgrid(sidelen: int|tuple, dim: int) -> torch.Tensor:
     pixel_coords = torch.Tensor(pixel_coords).view(-1, dim)
     return pixel_coords
 
-# def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
-#     transform = Compose([
-#         ToTensor(),
-#         Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
-#     ])
-#     voxel_tensor = transform(voxel_grid)
-#     assert isinstance(voxel_tensor, torch.Tensor), "Expected a tensor after transformation"
-#     return voxel_tensor
-
-
-# def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
-#     '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
-#     tensors = tuple(dim * [torch.linspace(-1, 1, steps=sidelen)])
-#     mgrid = torch.stack(torch.meshgrid(*tensors, indexing='ij'), dim=-1)
-#     mgrid = mgrid.reshape(-1, dim)
-#     return mgrid
-
 class VoxelFitting(Dataset):
     def __init__(self, voxel_grid: np.ndarray, sidelength: int|tuple):
         super().__init__()
@@ -122,7 +105,6 @@ class VoxelFitting(Dataset):
 
         self.transform = Compose([
             ToTensor(),
-            # Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
         ])
         irrad_grid = self.transform(voxel_grid)
         self.voxels = irrad_grid.view(1, *sidelength).permute(0, 2, 3, 1) # type: ignore
