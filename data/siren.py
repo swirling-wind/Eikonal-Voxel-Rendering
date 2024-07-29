@@ -80,6 +80,29 @@ def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
     assert isinstance(voxel_tensor, torch.Tensor), "Expected a tensor after transformation"
     return voxel_tensor
 
+def get_mgrid(sidelen: int|tuple, dim: int) -> torch.Tensor:
+    '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
+
+    if isinstance(sidelen, int):
+        sidelen = dim * (sidelen,)
+
+    if dim == 2:
+        pixel_coords = np.stack(np.mgrid[:sidelen[0], :sidelen[1]], axis=-1)[None, ...].astype(np.float32) # type: ignore
+        pixel_coords[0, :, :, 0] = pixel_coords[0, :, :, 0] / (sidelen[0] - 1)
+        pixel_coords[0, :, :, 1] = pixel_coords[0, :, :, 1] / (sidelen[1] - 1)
+    elif dim == 3:
+        pixel_coords = np.stack(np.mgrid[:sidelen[0], :sidelen[1], :sidelen[2]], axis=-1)[None, ...].astype(np.float32) # type: ignore
+        pixel_coords[..., 0] = pixel_coords[..., 0] / max(sidelen[0] - 1, 1)
+        pixel_coords[..., 1] = pixel_coords[..., 1] / (sidelen[1] - 1)
+        pixel_coords[..., 2] = pixel_coords[..., 2] / (sidelen[2] - 1)
+    else:
+        raise NotImplementedError('Not implemented for dim=%d' % dim)
+
+    pixel_coords -= 0.5
+    pixel_coords *= 2.
+    pixel_coords = torch.Tensor(pixel_coords).view(-1, dim)
+    return pixel_coords
+
 def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
     '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
     tensors = tuple(dim * [torch.linspace(-1, 1, steps=sidelen)])
@@ -100,6 +123,10 @@ class VoxelFitting(Dataset):
     def __getitem__(self, idx):
         if idx > 0: raise IndexError
         return self.coords, self.voxels
+    
+from PIL import Image
+import matplotlib.pyplot as plt
+from data.siren import *
 
 class ImageFitting(Dataset):
     def __init__(self, grid, sidelength: int):
