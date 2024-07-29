@@ -71,14 +71,6 @@ class Siren(nn.Module):
         output = self.net(coords) # type: ignore
         return output
 
-def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
-    transform = Compose([
-        ToTensor(),
-        Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
-    ])
-    voxel_tensor = transform(voxel_grid)
-    assert isinstance(voxel_tensor, torch.Tensor), "Expected a tensor after transformation"
-    return voxel_tensor
 
 def get_mgrid(sidelen: int|tuple, dim: int) -> torch.Tensor:
     '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
@@ -103,6 +95,16 @@ def get_mgrid(sidelen: int|tuple, dim: int) -> torch.Tensor:
     pixel_coords = torch.Tensor(pixel_coords).view(-1, dim)
     return pixel_coords
 
+# def get_tensor_from_grid(voxel_grid: np.ndarray) -> torch.Tensor:
+#     transform = Compose([
+#         ToTensor(),
+#         Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
+#     ])
+#     voxel_tensor = transform(voxel_grid)
+#     assert isinstance(voxel_tensor, torch.Tensor), "Expected a tensor after transformation"
+#     return voxel_tensor
+
+
 def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
     '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1. '''
     tensors = tuple(dim * [torch.linspace(-1, 1, steps=sidelen)])
@@ -111,11 +113,20 @@ def get_coord_grid(sidelen: int, dim: int) -> torch.Tensor:
     return mgrid
 
 class VoxelFitting(Dataset):
-    def __init__(self, voxel_grid: np.ndarray, sidelength: int):
+    def __init__(self, voxel_grid: np.ndarray, sidelength: int|tuple):
         super().__init__()
-        voxel_tensor = get_tensor_from_grid(voxel_grid)
-        self.voxels = voxel_tensor.view(1, sidelength, sidelength, sidelength).permute(0, 2, 3, 1)
-        self.coords = get_coord_grid(sidelength, dim=3)
+        if isinstance(sidelength, int):
+            sidelength = (sidelength, sidelength, sidelength)
+
+        self.coords = get_mgrid(sidelength, dim=3)
+
+        self.transform = Compose([
+            ToTensor(),
+            Normalize(torch.Tensor([0.5]), torch.Tensor([0.5]))
+        ])
+        self.dataset = voxel_grid
+        irrad_grid = self.transform(self.dataset)
+        self.voxels = irrad_grid.view(1, *sidelength).permute(0, 2, 3, 1) # type: ignore
 
     def __len__(self):
         return 1
@@ -123,23 +134,15 @@ class VoxelFitting(Dataset):
     def __getitem__(self, idx):
         if idx > 0: raise IndexError
         return self.coords, self.voxels
-    
-from PIL import Image
-import matplotlib.pyplot as plt
-from data.siren import *
 
 class ImageFitting(Dataset):
-    def __init__(self, dataset, sidelength: tuple):
+    def __init__(self, dataset, sidelength: int|tuple):
         super().__init__()
-
-        # self.coords = get_coord_grid(sidelength, dim=2)
-        # img = get_tensor_from_grid(dataset)
-        # self.pixels = img.permute(1, 2, 0).view(-1, 1)
-        
-
-
+        if isinstance(sidelength, int):
+            sidelength = (sidelength, sidelength)
 
         self.coords = get_mgrid(sidelength, dim=2)
+
         self.transform = Compose([
             Resize(sidelength),
             ToTensor(),
