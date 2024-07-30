@@ -1,9 +1,10 @@
-import time
 import os
 from datetime import datetime
 # import __main__
 import numpy as np
 import taichi as ti
+import taichi.math as tm
+from taichi.types import vector, matrix
 from render.renderer import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
 
@@ -118,7 +119,7 @@ class Scene:
         
     @staticmethod
     @ti.func
-    def round_idx(idx_):
+    def round_idx(idx_: vector(3, ti.f32)) -> vector(3, ti.i32):
         idx = ti.cast(idx_, ti.f32)
         return ti.Vector(
             [ti.round(idx[0]), # type: ignore
@@ -126,7 +127,7 @@ class Scene:
              ti.round(idx[2])]).cast(ti.i32) # type: ignore
 
     @ti.func
-    def set_voxel(self, idx, mat, color, ior=1.0):
+    def set_voxel(self, idx: tm.vec3, mat: ti.i8, color: tm.vec3, ior=1.0):
         self.renderer.set_voxel(self.round_idx(idx), mat, color, ior)
 
     @ti.func

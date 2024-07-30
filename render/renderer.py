@@ -1,4 +1,5 @@
 import taichi as ti
+import taichi.math as tm
 from common.math_utils import (eps, inf, out_dir, ray_aabb_intersection)
 from taichi.types import vector, matrix
 
@@ -107,13 +108,13 @@ class Renderer:
         return ret
 
     @ti.func
-    def _to_voxel_index(self, pos: vector(3, ti.f32)) -> ti.i32:
+    def _to_voxel_index(self, pos: tm.vec3) -> ti.i32:
         p = pos * self.voxel_inv_dx
         voxel_index = ti.floor(p).cast(ti.i32) # type: ignore
         return voxel_index
 
     @ti.func
-    def voxel_surface_color(self, pos: vector(3, ti.f32)):
+    def voxel_surface_color(self, pos: tm.vec3):
         p = pos * self.voxel_inv_dx
         p -= ti.floor(p)
         voxel_index = self._to_voxel_index(pos)
@@ -138,22 +139,22 @@ class Renderer:
         return voxel_color * (1.3 - 1.2 * f), is_light
 
     @ti.func
-    def ray_march(self, p: vector(3, ti.f32), d: vector(3, ti.f32)):  # floor's sdf
+    def ray_march(self, p: tm.vec3, d: tm.vec3):  # floor's sdf
         dist = inf
         if d[1] < -eps:
             dist = (self.floor_height[None] - p[1]) / d[1]
         return dist
 
     @ti.func
-    def sdf_normal(self, p):    # floor's normal
+    def sdf_normal(self) -> tm.vec3:    # floor's normal
         return ti.Vector([0.0, 1.0, 0.0])  # up
 
     @ti.func
-    def sdf_color(self, p):   # floor's color
+    def sdf_color(self) -> tm.vec3:   # floor's color
         return self.floor_color[None]
 
     @ti.func
-    def dda_voxel(self, eye_pos, d):
+    def dda_voxel(self, eye_pos: tm.vec3, d: tm.vec3):
         for i in ti.static(range(3)):
             if abs(d[i]) < 1e-6:
                 d[i] = 1e-6
@@ -221,8 +222,7 @@ class Renderer:
                 1] and self.bbox[0][2] <= pos[2] and pos[2] < self.bbox[1][2]
 
     @ti.func
-    def next_hit(self, 
-                 pos: vector(3, ti.f32), d: vector(3, ti.f32)):
+    def next_hit(self, pos: tm.vec3, d: tm.vec3):
         closest = inf
         normal = ti.Vector([0.0, 0.0, 0.0])
         c = ti.Vector([0.0, 0.0, 0.0])
@@ -233,8 +233,8 @@ class Renderer:
         if ray_march_dist < DIS_LIMIT and ray_march_dist < closest:
             #  Floor hit
             closest = ray_march_dist
-            normal = self.sdf_normal(pos + d * closest)
-            c = self.sdf_color(pos + d * closest)
+            normal = self.sdf_normal()
+            c = self.sdf_color()
 
         # Highlight the selected voxel
         if self.cast_voxel_hit[None]:
@@ -291,7 +291,7 @@ class Renderer:
             hit_background = 0
 
             # Tracing begin
-            for bounce in range(MAX_RAY_DEPTH):
+            for _bounce in range(MAX_RAY_DEPTH):
                 depth += 1
                 closest, normal, c, hit_light = self.next_hit(pos, d)
                 hit_pos = pos + closest * d
@@ -378,11 +378,11 @@ class Renderer:
 
     @staticmethod
     @ti.func
-    def to_vec3u(c):
+    def to_vec3u(c: tm.vec3) -> tm.vec3:
         c = ti.math.clamp(c, 0.0, 1.0)
         r = ti.Vector([ti.u8(0), ti.u8(0), ti.u8(0)])
         for i in ti.static(range(3)):
-            r[i] = ti.cast(c[i] * 255, ti.u8) # type: ignore
+            r[i] = ti.cast(c[i] * 255, ti.u8)
         return r
 
     @staticmethod
@@ -394,7 +394,7 @@ class Renderer:
         return r
 
     @ti.func
-    def set_voxel(self, idx, mat, color, ior=1.0):
+    def set_voxel(self, idx, mat, color: tm.vec3, ior=1.0):
         self.voxel_material[idx] = ti.cast(mat, ti.i8)
         self.voxel_color[idx] = self.to_vec3u(color)
         self.ior[idx] = ior
