@@ -1,5 +1,6 @@
 import taichi as ti
 from common.math_utils import (eps, inf, out_dir, ray_aabb_intersection)
+from taichi.types import vector
 
 MAX_RAY_DEPTH = 4
 use_directional_light = True
@@ -9,7 +10,7 @@ DIS_LIMIT = 100
 
 @ti.data_oriented
 class Renderer:
-    def __init__(self, dx, image_res, up, voxel_edges, exposure=3):
+    def __init__(self, dx: float, image_res: tuple[int, int], up: tuple, voxel_edges: float, exposure: float=3.0):
         self.image_res = image_res
         self.aspect_ratio = image_res[0] / image_res[1]
         self.vignette_strength = 0.9
@@ -80,8 +81,8 @@ class Renderer:
         self.ior.fill(1.0)
         self.atten.fill(0.006)
 
-    def set_directional_light(self, direction, light_direction_noise,
-                              light_color):
+    def set_directional_light(self, direction: tuple, light_direction_noise: float,
+                              light_color: tuple):
         direction_norm = (direction[0]**2 + direction[1]**2 +
                           direction[2]**2)**0.5
         self.light_direction[None] = (direction[0] / direction_norm,
@@ -91,12 +92,12 @@ class Renderer:
         self.light_color[None] = light_color
 
     @ti.func
-    def inside_grid(self, ipos):
+    def inside_grid(self, ipos: ti.i32) -> bool:
         return ipos.min() >= -self.voxel_grid_res // 2 and ipos.max(
         ) < self.voxel_grid_res // 2
 
     @ti.func
-    def query_density(self, ipos: int) -> float:
+    def query_density(self, ipos: ti.i32) -> ti.float32:
         inside = self.inside_grid(ipos)
         ret = 0.0
         if inside:
@@ -220,7 +221,8 @@ class Renderer:
                 1] and self.bbox[0][2] <= pos[2] and pos[2] < self.bbox[1][2]
 
     @ti.func
-    def next_hit(self, pos, d):
+    def next_hit(self, 
+                 pos: vector(3, ti.f32), d: vector(3, ti.f32)):
         closest = inf
         normal = ti.Vector([0.0, 0.0, 0.0])
         c = ti.Vector([0.0, 0.0, 0.0])
@@ -261,7 +263,7 @@ class Renderer:
         self.fov[None] = fov
 
     @ti.func
-    def get_cast_dir(self, u, v):
+    def get_cast_dir(self, u: ti.i32, v: ti.i32) -> ti.Vector:
         fov = self.fov[None]
         d = (self.look_at[None] - self.camera_pos[None]).normalized()
         fu = (2 * fov * (u + ti.random(ti.f32)) / self.image_res[1] -

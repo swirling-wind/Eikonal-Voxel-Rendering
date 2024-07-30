@@ -115,10 +115,7 @@ class Scene:
                                  up=UP_DIR,
                                  voxel_edges=voxel_edges,
                                  exposure=exposure)
-
-        # if not os.path.exists('screenshot'):
-        #     os.makedirs('screenshot')
-
+        
     @staticmethod
     @ti.func
     def round_idx(idx_):
@@ -141,7 +138,7 @@ class Scene:
         self.renderer.floor_height[None] = height
         self.renderer.floor_color[None] = color
 
-    def set_directional_light(self, direction, direction_noise, color):
+    def set_directional_light(self, direction: tuple, direction_noise: float, color: tuple):
         self.renderer.set_directional_light(direction, direction_noise, color)
 
     def set_background_color(self, color):
@@ -201,7 +198,7 @@ class Scene:
             return ior_grid.to_numpy()
 
     @ior.setter
-    def ior(self, ior_grid: ti.types.ndarray()): # type: ignore
+    def ior(self, ior_grid: ti.types.ndarray()):
         self.renderer.ior = ior_grid
 
     #### Gradient ####
@@ -211,7 +208,7 @@ class Scene:
         return grad_grid if isinstance(grad_grid, np.ndarray) else grad_grid.to_numpy()
 
     @gradient.setter
-    def gradient(self, grad_field: ti.types.ndarray()): # type: ignore
+    def gradient(self, grad_field: ti.types.ndarray()):
         self.renderer.grad = grad_field
 
     #### Attenuation ####
@@ -221,7 +218,7 @@ class Scene:
         return atten_grid if isinstance(atten_grid, np.ndarray) else atten_grid.to_numpy()
 
     @attenuation.setter
-    def attenuation(self, atten_field: ti.types.ndarray()): # type: ignore
+    def attenuation(self, atten_field: ti.types.ndarray()):
         self.renderer.atten = atten_field
 
     #### Loc Dir ####
@@ -231,7 +228,7 @@ class Scene:
         return local_direction if isinstance(local_direction, np.ndarray) else local_direction.to_numpy()
 
     @local_diretion.setter
-    def local_diretion(self, loc_dir_field: ti.types.ndarray()): # type: ignore
+    def local_diretion(self, loc_dir_field: ti.types.ndarray()):
         self.renderer.loc_dir = loc_dir_field
 
     #### Irradiance ####
@@ -241,5 +238,5 @@ class Scene:
         return irradiance_field if isinstance(irradiance_field, np.ndarray) else irradiance_field.to_numpy()
     
     @irradiance.setter
-    def irradiance(self, irrad_field: ti.types.ndarray()): # type: ignore
+    def irradiance(self, irrad_field: ti.types.ndarray()):
         self.renderer.irrad = irrad_field
