@@ -1,6 +1,6 @@
 import taichi as ti
 from common.math_utils import (eps, inf, out_dir, ray_aabb_intersection)
-from taichi.types import vector
+from taichi.types import vector, matrix
 
 MAX_RAY_DEPTH = 4
 use_directional_light = True
@@ -97,7 +97,7 @@ class Renderer:
         ) < self.voxel_grid_res // 2
 
     @ti.func
-    def query_density(self, ipos: ti.i32) -> ti.float32:
+    def query_density(self, ipos: ti.i32) -> ti.f32:
         inside = self.inside_grid(ipos)
         ret = 0.0
         if inside:
@@ -107,13 +107,13 @@ class Renderer:
         return ret
 
     @ti.func
-    def _to_voxel_index(self, pos) -> ti.i32:
+    def _to_voxel_index(self, pos: vector(3, ti.f32)) -> ti.i32:
         p = pos * self.voxel_inv_dx
         voxel_index = ti.floor(p).cast(ti.i32) # type: ignore
         return voxel_index
 
     @ti.func
-    def voxel_surface_color(self, pos):
+    def voxel_surface_color(self, pos: vector(3, ti.f32)):
         p = pos * self.voxel_inv_dx
         p -= ti.floor(p)
         voxel_index = self._to_voxel_index(pos)
@@ -138,7 +138,7 @@ class Renderer:
         return voxel_color * (1.3 - 1.2 * f), is_light
 
     @ti.func
-    def ray_march(self, p, d):  # floor's sdf
+    def ray_march(self, p: vector(3, ti.f32), d: vector(3, ti.f32)):  # floor's sdf
         dist = inf
         if d[1] < -eps:
             dist = (self.floor_height[None] - p[1]) / d[1]
