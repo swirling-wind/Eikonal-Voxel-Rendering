@@ -220,7 +220,7 @@ class Renderer:
                 1] and self.bbox[0][2] <= pos[2] and pos[2] < self.bbox[1][2]
 
     @ti.func
-    def next_hit(self, pos, d, t):
+    def next_hit(self, pos, d):
         closest = inf
         normal = ti.Vector([0.0, 0.0, 0.0])
         c = ti.Vector([0.0, 0.0, 0.0])
@@ -278,7 +278,7 @@ class Renderer:
         for u, v in self.color_buffer:
             d = self.get_cast_dir(u, v)
             pos = self.camera_pos[None]
-            t = 0.0
+            # t = 0.0
 
             contrib = ti.Vector([0.0, 0.0, 0.0])
             throughput = ti.Vector([1.0, 1.0, 1.0])
@@ -291,7 +291,7 @@ class Renderer:
             # Tracing begin
             for bounce in range(MAX_RAY_DEPTH):
                 depth += 1
-                closest, normal, c, hit_light = self.next_hit(pos, d, t)
+                closest, normal, c, hit_light = self.next_hit(pos, d)
                 hit_pos = pos + closest * d
                 if not hit_light and normal.norm() != 0 and closest < 1e8: # type: ignore
                     d = out_dir(normal)
@@ -310,7 +310,7 @@ class Renderer:
                         if dot > 0:
                             hit_light_ = 0
                             dist, _, _, hit_light_ = self.next_hit(
-                                pos, light_dir, t)
+                                pos, light_dir)
                             if dist > DIS_LIMIT:
                                 # far enough to hit directional light
                                 contrib += throughput * \
