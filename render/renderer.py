@@ -96,7 +96,7 @@ class Renderer:
         ) < self.voxel_grid_res // 2
 
     @ti.func
-    def query_density(self, ipos):
+    def query_density(self, ipos: int) -> float:
         inside = self.inside_grid(ipos)
         ret = 0.0
         if inside:
@@ -106,7 +106,7 @@ class Renderer:
         return ret
 
     @ti.func
-    def _to_voxel_index(self, pos):
+    def _to_voxel_index(self, pos) -> ti.i32:
         p = pos * self.voxel_inv_dx
         voxel_index = ti.floor(p).cast(ti.i32) # type: ignore
         return voxel_index
@@ -212,7 +212,7 @@ class Renderer:
         return hit_distance, normal, c, hit_light, voxel_index
 
     @ti.func
-    def inside_particle_grid(self, ipos):
+    def inside_particle_grid(self, ipos: ti.i32) -> bool:
         # Check if the voxel is inside the bounding box
         pos = ipos * self.voxel_dx
         return self.bbox[0][0] <= pos[0] and pos[0] < self.bbox[1][
@@ -308,8 +308,8 @@ class Renderer:
                                      dir_noise).normalized()
                         dot = light_dir.dot(normal)
                         if dot > 0:
-                            hit_light_ = 0
-                            dist, _, _, hit_light_ = self.next_hit(
+                            _hit_light = 0
+                            dist, _, _, _hit_light = self.next_hit(
                                 pos, light_dir)
                             if dist > DIS_LIMIT:
                                 # far enough to hit directional light
@@ -370,7 +370,7 @@ class Renderer:
         self.render()
         self.current_spp += 1
 
-    def fetch_image(self):
+    def fetch_image(self) -> ti.Field:
         self._render_to_image(self.current_spp)
         return self._rendered_image
 

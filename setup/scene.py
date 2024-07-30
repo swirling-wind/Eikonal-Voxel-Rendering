@@ -1,6 +1,6 @@
-# import time
-# import os
-# from datetime import datetime
+import time
+import os
+from datetime import datetime
 # import __main__
 import numpy as np
 import taichi as ti
@@ -13,9 +13,8 @@ TARGET_FPS = 40
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
 ====================================================
-Camera:
-* Drag with your left mouse button to rotate
-* Press W/A/S/D/Q/E to move
+* Drag with your left mouse button to rotate camera
+* Press W/A/S/D/Q/E to move camera
 ====================================================
 '''
 
@@ -148,7 +147,7 @@ class Scene:
     def set_background_color(self, color):
         self.renderer.background_color[None] = color
 
-    def finish(self):
+    def finish(self, use_path_trace=True):
         print(HELP_MSG)
         self.window = ti.ui.Window("Taichi Voxel Renderer",
                                    SCREEN_RES,
@@ -161,6 +160,7 @@ class Scene:
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
+
         while self.window.running:
             should_reset_framebuffer = False
 
@@ -173,20 +173,23 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            for _ in range(2): # samples per pixel (spp) to adjust fps
+            for _ in range(1): # samples per pixel (spp) to adjust fps
                 self.renderer.accumulate()
+
             img = self.renderer.fetch_image()
-            # if self.window.is_pressed('p'):   # Save screenshot
-            #     timestamp = datetime.today().strftime('%Y-%m-%d-%H%M%S')
-            #     dirpath = os.getcwd()
-            #     main_filename = os.path.split(__main__.__file__)[1]
-            #     fname = os.path.join(dirpath, 'screenshot', f"{main_filename}-{timestamp}.jpg")
-            #     ti.tools.image.imwrite(img, fname)
-            #     print(f"Screenshot has been saved to {fname}")
+            if self.window.is_pressed('p'):   # Save screenshot
+                self.save_screenshot(img)
             canvas.set_image(img)
             self.window.show()
         
         self.window.destroy()
+
+    def save_screenshot(self, image: ti.Field):
+        timestamp = datetime.today().strftime('%Y-%m-%d-%H%M%S')
+        dirpath = os.getcwd()
+        fname = os.path.join(dirpath, 'snapshots', f"{timestamp}.jpg")
+        ti.tools.image.imwrite(image, fname) # type: ignore
+        print(f"Screenshot has been saved to {fname}")
     
     #### IOR ####
     @property
