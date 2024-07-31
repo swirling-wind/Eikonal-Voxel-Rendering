@@ -276,6 +276,7 @@ class Renderer:
             contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * pos[1], 0, 1))
             self.color_buffer[u, v] += contrib
 
+        # TODO
 
     @ti.kernel
     def path_tracing(self):

@@ -28,7 +28,7 @@ def ray_aabb_intersection(box_min, box_max, o, d):
     far_int = inf
 
     for i in ti.static(range(3)):
-        if d[i] == 0:
+        if d[i] == 0: # when ray parallel to plane
             if o[i] < box_min[i] or o[i] > box_max[i]:
                 intersect = 0
         else:
