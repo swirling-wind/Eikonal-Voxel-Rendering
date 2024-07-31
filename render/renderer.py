@@ -8,6 +8,7 @@ use_directional_light = True
 
 DIS_LIMIT = 100
 
+MAX_STEPS = 128
 
 @ti.data_oriented
 class Renderer:
@@ -118,17 +119,6 @@ class Renderer:
         p = pos * self.voxel_inv_dx
         p -= ti.floor(p)
         voxel_index = self._to_voxel_index(pos)
-
-        # boundary = self.voxel_edges
-        # count = 0
-        # for i in ti.static(range(3)):
-        #     if p[i] < boundary or p[i] > 1 - boundary:
-        #         count += 1
-
-        f = 0.0
-        # if count >= 2: # Render the boundary / edge
-        #     f = 1.0
-
         voxel_color = ti.Vector([0.0, 0.0, 0.0])
         is_light = 0
         if self.inside_particle_grid(voxel_index):
@@ -136,10 +126,10 @@ class Renderer:
             if self.voxel_material[voxel_index] == 2:
                 is_light = 1
 
-        return voxel_color * (1.3 - 1.2 * f), is_light
+        return voxel_color, is_light # [tm.vec3, ti.i32]
 
     @ti.func
-    def ray_march(self, p: tm.vec3, d: tm.vec3):  # floor's sdf
+    def ray_march(self, p: tm.vec3, d: tm.vec3) -> ti.f32:  # floor's sdf
         dist = inf
         if d[1] < -eps:
             dist = (self.floor_height[None] - p[1]) / d[1]
@@ -275,15 +265,16 @@ class Renderer:
         return d
 
     @ti.kernel
-    def ray_marching(self):
+    def ray_marching(self):        
         for u, v in self.color_buffer:
             dir = self.get_cast_dir(u, v)
             pos = self.camera_pos[None]
             contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
-            contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.01 * pos[2], 0, 1))
-
+            
+            for _ in range(MAX_STEPS):
+                cur_pos_color = self.voxel_color[self.round_idx(pos)]
+            contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * pos[1], 0, 1))
             self.color_buffer[u, v] += contrib
-
 
 
     @ti.kernel
@@ -406,9 +397,11 @@ class Renderer:
         self.voxel_color[idx] = self.to_vec3u(color)
         self.ior[idx] = ior
 
-
+    @staticmethod
     @ti.func
-    def get_voxel(self, ijk):
-        mat = self.voxel_material[ijk]
-        color = self.voxel_color[ijk]
-        return mat, self.to_vec3(color)
+    def round_idx(idx_: vector(3, ti.f32)) -> vector(3, ti.i32):
+        idx = ti.cast(idx_, ti.f32)
+        return ti.Vector(
+            [ti.round(idx[0]), # type: ignore
+             ti.round(idx[1]), # type: ignore
+             ti.round(idx[2])]).cast(ti.i32) # type: ignore

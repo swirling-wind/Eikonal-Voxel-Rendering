@@ -1,13 +1,14 @@
 import math
 import taichi as ti
 import numpy as np
+import taichi.math as tm
 
 eps = 1e-4
 inf = 1e10
 
 
 @ti.func
-def out_dir(n):
+def out_dir(n: tm.vec3):
     u = ti.Vector([1.0, 0.0, 0.0])
     if ti.abs(n[1]) < 1 - 1e-3:
         u = n.cross(ti.Vector([0.0, 1.0, 0.0])).normalized()

@@ -93,7 +93,7 @@ def setup_voxel_scene(num_x: int, num_y: int, num_z: int) -> tuple[Scene, int]:
     glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", num_xyz, 0.07, need_rotate=True)
     bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, num_xyz)
 
-    scene = Scene(exposure=1)
+    scene = Scene(exposure=1.2)
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
     scene.set_background_color((1, 0.9, 0.9))
 

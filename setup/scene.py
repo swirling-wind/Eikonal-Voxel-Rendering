@@ -109,7 +109,7 @@ class Camera:
 
 
 class Scene:
-    def __init__(self, voxel_edges=0.06, exposure=3):        
+    def __init__(self, voxel_edges=0.06, exposure=3.0):        
         self.renderer = Renderer(dx=VOXEL_DX,
                                  image_res=SCREEN_RES,
                                  up=UP_DIR,
@@ -128,11 +128,6 @@ class Scene:
     @ti.func
     def set_voxel(self, idx: tm.vec3, mat: ti.i8, color: tm.vec3, ior=1.0):
         self.renderer.set_voxel(self.round_idx(idx), mat, color, ior)
-
-    @ti.func
-    def get_voxel(self, idx):
-        mat, color = self.renderer.get_voxel(self.round_idx(idx))
-        return mat, color
 
     def set_floor(self, height, color):
         self.renderer.floor_height[None] = height
@@ -168,7 +163,7 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            #  for _ in range(num_samples) to adjust fps with samples per pixel (spp) 
+            # Could Use for _ in range(num_samples) to adjust samples per pixel (spp) 
             if ray_marching:
                 self.renderer.ray_marching()
             else:
