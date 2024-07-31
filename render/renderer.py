@@ -275,12 +275,23 @@ class Renderer:
         return d
 
     @ti.kernel
-    def render(self):
+    def ray_marching(self):
+        for u, v in self.color_buffer:
+            dir = self.get_cast_dir(u, v)
+            pos = self.camera_pos[None]
+            contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
+            contrib += tm.vec3(u / 1280, v / 720, 0.5)
+
+            self.color_buffer[u, v] += contrib
+
+
+
+    @ti.kernel
+    def path_tracing(self):
         ti.loop_config(block_dim=256)
         for u, v in self.color_buffer:
             d = self.get_cast_dir(u, v)
             pos = self.camera_pos[None]
-            # t = 0.0
 
             contrib = ti.Vector([0.0, 0.0, 0.0])
             throughput = ti.Vector([1.0, 1.0, 1.0])
@@ -367,10 +378,6 @@ class Renderer:
     def reset_framebuffer(self):
         self.current_spp = 0
         self.color_buffer.fill(0)
-
-    def accumulate(self):
-        self.render()
-        self.current_spp += 1
 
     def fetch_image(self) -> ti.Field:
         self._render_to_image(self.current_spp)

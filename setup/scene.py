@@ -10,7 +10,6 @@ from common.math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
 SCREEN_RES = (1280, 720)
-TARGET_FPS = 40
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
 ====================================================
@@ -145,23 +144,21 @@ class Scene:
     def set_background_color(self, color):
         self.renderer.background_color[None] = color
 
-    def finish(self, use_path_trace=True):
+    def display(self, ray_marching=False):
         print(HELP_MSG)
-        self.window = ti.ui.Window("Taichi Voxel Renderer",
+        self.window = ti.ui.Window("Path Tracing",
                                    SCREEN_RES,
                                    vsync=True)
         self.camera = Camera(self.window, up=UP_DIR)
         self.renderer.set_camera_pos(*self.camera.position)
         self.renderer.set_look_at(*self.camera.look_at)
         self.renderer.reset_framebuffer()
-
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
 
         while self.window.running:
             should_reset_framebuffer = False
-
             if self.camera.update_camera():
                 self.renderer.set_camera_pos(*self.camera.position)
                 look_at = self.camera.look_at
@@ -171,15 +168,19 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
-            for _ in range(1): # samples per pixel (spp) to adjust fps
-                self.renderer.accumulate()
+            #  for _ in range(num_samples) to adjust fps with samples per pixel (spp) 
+            if ray_marching:
+                self.renderer.ray_marching()
+            else:
+                self.renderer.path_tracing()
+            self.renderer.current_spp += 1
 
             img = self.renderer.fetch_image()
-            if self.window.is_pressed('p'):   # Save screenshot
-                self.save_screenshot(img)
+            # if self.window.is_pressed('p'):   # Save screenshot
+            #     self.save_screenshot(img)
             canvas.set_image(img)
             self.window.show()
-        
+
         self.window.destroy()
 
     def save_screenshot(self, image: ti.Field):
