@@ -280,7 +280,7 @@ class Renderer:
             dir = self.get_cast_dir(u, v)
             pos = self.camera_pos[None]
             contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
-            contrib += tm.vec3(u / 1280, v / 720, 0.5)
+            contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.01 * pos[2], 0, 1))
 
             self.color_buffer[u, v] += contrib
 
