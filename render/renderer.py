@@ -28,6 +28,7 @@ class Renderer:
         # Voxel grid
         self.voxel_color = ti.Vector.field(3, dtype=ti.u8)
         self.voxel_material = ti.field(dtype=ti.i8)
+
         self.ior = ti.field(dtype=ti.f32)
 
         self.grad = ti.Vector.field(3, dtype=ti.f32)
@@ -87,7 +88,10 @@ class Renderer:
         self.floor_color[None] = (1, 1, 1)
 
         self.ior.fill(1.0)
-        self.atten.fill(0.006)
+
+        self.atten.fill(0.001)
+        self.scatter_strength.fill(0.0)
+
 
     def set_directional_light(self, direction: tuple, light_direction_noise: float,
                               light_color: tuple):
@@ -276,8 +280,10 @@ class Renderer:
 
             contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
+            I = tm.vec3(0.0)
+
             A = 0.0 # absorption (e.g: A.rgb)
-            T = 1.0 # initial transmittance is 1.0, that means all light pass through
+            # T = 1.0 # initial transmittance is 1.0, that means all light pass through without reflection or refraction
             n = 1.0 # inial IOR is 1.0
 
             step_size = 1.0
@@ -285,17 +291,32 @@ class Renderer:
             ray_dir = self.get_cast_dir(u, v)
 
             for _cur_step in range(MAX_MARCHING_STEPS):
-                voxel = self.grad[self.round_idx(ray_pos)]
-                voxelAtt = self.atten[self.round_idx(ray_pos)]
-
-                scatterStrength = self.scatter_strength[self.round_idx(ray_pos)]
-                anisotropyFactor = self.anisotropy_factor[self.round_idx(ray_pos)]
-                anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
-                
-                voxelOpaqueData = self.opaque[self.round_idx(ray_pos)]
-
-                voxelLightDir = self.loc_dir[self.round_idx(ray_pos)]
+                gradient = self.grad[self.round_idx(ray_pos)]
                 voxelIrrad = self.irrad[self.round_idx(ray_pos)]
+                # voxelLightDir = self.loc_dir[self.round_idx(ray_pos)]
+
+                voxelAtt = self.atten[self.round_idx(ray_pos)]
+                scatterStrength = self.scatter_strength[self.round_idx(ray_pos)]
+                # anisotropyFactor = self.anisotropy_factor[self.round_idx(ray_pos)]
+                # anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
+                # voxelOpaqueData = self.opaque[self.round_idx(ray_pos)]               
+
+                # --------------------------------------
+                # Compute scattering term
+                # --------------------------------------
+                Is = voxelIrrad
+
+                # --------------------------------------
+                # Compute new direction and refraction index
+                # --------------------------------------
+                # oldPos = ray_pos
+                # ray_dir += step_size * gradient / n
+                # ray_pos += step_size * ray_dir / (n * n)
+                # n += tm.dot(gradient, ray_pos - oldPos)
+
+
+                Ic = scatterStrength * Is
+                I += Ic * tm.exp(-A)
 
 
             contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
