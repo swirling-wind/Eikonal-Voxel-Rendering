@@ -79,7 +79,7 @@ class MLP:
         torch.cuda.empty_cache()
         print("Device:", DEVICE)
         
-        prev_lr = 0.001
+        prev_lr = 5e-4
 
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=prev_lr)

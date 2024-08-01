@@ -172,12 +172,12 @@ class SirenFitter:
 
                 loss = ((model_output - ground_truth) ** 2).mean()
 
-                epsilon = 1e-4  # Add to log to prevent NaN
+                # epsilon = 1e-4  # Add to log to prevent NaN
                 # - Use log loss [NOT WORK. INFER RESULT IS LIKE HEAT WAVE]                
                 # loss = torch.log((model_output - ground_truth) ** 2 + epsilon).mean()
 
                 # - Use log loss with abs [NOT WORK. THE CONVERGENCE IS TOO SLOW AND ONLY CAPTURES NOISE]
-                loss = torch.log(torch.abs(model_output - ground_truth) + epsilon).mean()
+                # loss = torch.log(torch.abs(model_output - ground_truth) + epsilon).mean()
 
                 # - Use relative error as loss [NOT WORK. INFER RESULT IS CONSTANT 0 VALUE]
                 # relative_error = (model_output - ground_truth) / (ground_truth + epsilon)
@@ -207,6 +207,6 @@ class SirenFitter:
             infer_output = torch.nn.functional.pad(infer_output, padding, mode='constant', value=0)
         
         # Normalize the output to 0-255
-        infer_output = (infer_output - infer_output.min()) / infer_output.max() * 255
+        # infer_output = (infer_output - infer_output.min()) / infer_output.max() * 255
         
         return infer_output.cpu().numpy()
