@@ -126,8 +126,16 @@ class Scene:
              ti.round(idx[2])]).cast(ti.i32) # type: ignore
 
     @ti.func
-    def set_voxel(self, idx: tm.vec3, mat: ti.i8, color: tm.vec3, ior=1.0):
-        self.renderer.set_voxel(self.round_idx(idx), mat, color, ior)
+    def set_voxel(self, idx: tm.vec3, origin: tm.vec3,
+                  mat: ti.i8, color: tm.vec3, ior=1.0):
+        self.renderer.set_voxel(self.round_idx(idx + origin), mat, color, ior)
+
+    @ti.func
+    def set_voxel_data(self, idx: tm.vec3, origin: tm.vec3,
+                       atten: ti.f32, scatter_strength: ti.f32, 
+                       anisotropy_factor: ti.f32, opaque: ti.u8):
+        self.renderer.set_voxel_data(self.round_idx(idx + origin), atten=atten, scatter_strength=scatter_strength,
+                                     anisotropy_factor=anisotropy_factor, opaque=opaque)
 
     def set_floor(self, height, color):
         self.renderer.floor_height[None] = height

@@ -28,7 +28,6 @@ class Renderer:
         # Voxel grid
         self.voxel_color = ti.Vector.field(3, dtype=ti.u8)
         self.voxel_material = ti.field(dtype=ti.i8)
-
         self.ior = ti.field(dtype=ti.f32)
 
         self.grad = ti.Vector.field(3, dtype=ti.f32)
@@ -302,21 +301,28 @@ class Renderer:
                 # voxelOpaqueData = self.opaque[self.round_idx(ray_pos)]               
 
                 # --------------------------------------
-                # Compute scattering term
+                # Compute Attenuation factor
+                A += step_size * voxelAtt
+
                 # --------------------------------------
+                # Compute scattering term
                 Is = voxelIrrad
 
                 # --------------------------------------
                 # Compute new direction and refraction index
+                oldPos = ray_pos
+                ray_dir += step_size * gradient / n
+                ray_pos += step_size * ray_dir / (n * n)
+                n += tm.dot(gradient, ray_pos - oldPos)
+
                 # --------------------------------------
-                # oldPos = ray_pos
-                # ray_dir += step_size * gradient / n
-                # ray_pos += step_size * ray_dir / (n * n)
-                # n += tm.dot(gradient, ray_pos - oldPos)
-
-
+                # Compute combined intensity per voxel and compute final integral
                 Ic = scatterStrength * Is
                 I += Ic * tm.exp(-A)
+
+                # --------------------------------------
+                # check if we are not outside of the volume
+                # TODO
 
 
             contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
@@ -442,6 +448,14 @@ class Renderer:
         self.voxel_material[idx] = ti.cast(mat, ti.i8)
         self.voxel_color[idx] = self.to_vec3u(color)
         self.ior[idx] = ior
+
+    @ti.func
+    def set_voxel_data(self, idx, atten: ti.f32, scatter_strength: ti.f32, 
+                       anisotropy_factor: ti.f32, opaque: ti.u8):
+        self.atten[idx] = atten
+        self.scatter_strength[idx] = scatter_strength
+        self.anisotropy_factor[idx] = anisotropy_factor
+        self.opaque[idx] = opaque
 
     @staticmethod
     @ti.func
