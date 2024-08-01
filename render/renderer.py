@@ -3,12 +3,12 @@ import taichi.math as tm
 from common.math_utils import (eps, inf, out_dir, ray_aabb_intersection)
 from taichi.types import vector, matrix
 
-MAX_RAY_DEPTH = 4
+MAX_RAY_DEPTH = 3
 use_directional_light = True
 
 DIS_LIMIT = 100
 
-MAX_STEPS = 128
+MAX_MARCHING_STEPS = 128
 
 @ti.data_oriented
 class Renderer:
@@ -28,14 +28,16 @@ class Renderer:
         # Voxel grid
         self.voxel_color = ti.Vector.field(3, dtype=ti.u8)
         self.voxel_material = ti.field(dtype=ti.i8)
-
         self.ior = ti.field(dtype=ti.f32)
-        self.atten = ti.field(dtype=ti.f32)
 
         self.grad = ti.Vector.field(3, dtype=ti.f32)
-        
         self.irrad = ti.field(dtype=ti.f32)
-        self.loc_dir = ti.Vector.field(3, dtype=ti.f32)        
+        self.loc_dir = ti.Vector.field(3, dtype=ti.f32)
+        
+        self.atten = ti.field(dtype=ti.f32)
+        self.scatter_strength = ti.field(dtype=ti.f32)
+        self.anisotropy_factor = ti.field(dtype=ti.f32)
+        self.opaque = ti.field(dtype=ti.u8)
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -66,11 +68,15 @@ class Renderer:
                       self.voxel_grid_res).place(self.voxel_color,
                                                 self.voxel_material,
                                                 self.ior,
-                                                self.atten,
 
                                                 self.grad,
                                                 self.irrad,
-                                                self.loc_dir,                                                
+                                                self.loc_dir,
+
+                                                self.atten,
+                                                self.scatter_strength,
+                                                self.anisotropy_factor,
+                                                self.opaque,
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
@@ -253,7 +259,7 @@ class Renderer:
         self.fov[None] = fov
 
     @ti.func
-    def get_cast_dir(self, u: ti.i32, v: ti.i32) -> ti.Vector:
+    def get_cast_dir(self, u: ti.i32, v: ti.i32) -> tm.vec3:
         fov = self.fov[None]
         d = (self.look_at[None] - self.camera_pos[None]).normalized()
         fu = (2 * fov * (u + ti.random(ti.f32)) / self.image_res[1] -
@@ -266,17 +272,35 @@ class Renderer:
 
     @ti.kernel
     def ray_marching(self):        
-        for u, v in self.color_buffer:
-            dir = self.get_cast_dir(u, v)
-            pos = self.camera_pos[None]
+        for u, v in self.color_buffer:            
+
             contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
-            
-            for _ in range(MAX_STEPS):
-                cur_pos_color = self.voxel_color[self.round_idx(pos)]
-            contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * pos[1], 0, 1))
+
+            A = 0.0 # absorption (e.g: A.rgb)
+            T = 1.0 # initial transmittance is 1.0, that means all light pass through
+            n = 1.0 # inial IOR is 1.0
+
+            step_size = 1.0
+            ray_pos = self.camera_pos[None]
+            ray_dir = self.get_cast_dir(u, v)
+
+            for _cur_step in range(MAX_MARCHING_STEPS):
+                voxel = self.grad[self.round_idx(ray_pos)]
+                voxelAtt = self.atten[self.round_idx(ray_pos)]
+
+                scatterStrength = self.scatter_strength[self.round_idx(ray_pos)]
+                anisotropyFactor = self.anisotropy_factor[self.round_idx(ray_pos)]
+                anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
+                
+                voxelOpaqueData = self.opaque[self.round_idx(ray_pos)]
+
+                voxelLightDir = self.loc_dir[self.round_idx(ray_pos)]
+                voxelIrrad = self.irrad[self.round_idx(ray_pos)]
+
+
+            contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
             self.color_buffer[u, v] += contrib
 
-        # TODO
 
     @ti.kernel
     def path_tracing(self):
