@@ -1,6 +1,5 @@
 from .scene import Scene
 import taichi as ti
-# from taichi.math import *
 import taichi.math as tm
 
 import numpy as np
@@ -8,6 +7,7 @@ from scipy import ndimage
 import trimesh
 import open3d as o3d
 
+NUM_XYZ = (128, 128, 128)
 GLASS_IOR = 1.5
 LARGE_R, MEDIUM_R = 20, 15
 RED, BLUE, GREY = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), 
@@ -84,6 +84,8 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
     for i, j, k in ti.ndrange(num_x, num_y, num_z):
         if bunny_field[i, j, k] == 1:
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.02, scatter_strength=0.5,
+                                  anisotropy_factor=0.0, opaque=0)
 
 @ti.kernel
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
@@ -95,13 +97,13 @@ def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), fl
     # for debugging
     scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
 
-def setup_voxel_scene(num_x: int, num_y: int, num_z: int) -> tuple[Scene, int]:
+def setup_voxel_scene() -> tuple[Scene, int]:
     global scene, bunny_field, glass_field
 
-    num_xyz = (num_x, num_y, num_z)
-    bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res4.ply", num_xyz, 0.004)
-    glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", num_xyz, 0.07, need_rotate=True)
-    bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, num_xyz)
+    num_x, num_y, num_z = NUM_XYZ
+    bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res4.ply", NUM_XYZ, 0.004)
+    glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.07, need_rotate=True)
+    bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, NUM_XYZ)
 
     scene = Scene(exposure=1.2)
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))

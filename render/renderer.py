@@ -280,20 +280,16 @@ class Renderer:
             ray_dir = self.get_cast_dir(u, v)
            
             # Leave safe margin to avoid self-intersection
-            bbox_min = self.bbox[0]
-            bbox_max = self.bbox[1]
+            bbox_min = self.bbox[0]# - tm.vec3(1e-3)
+            bbox_max = self.bbox[1]# + tm.vec3(1e-3)
             inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, ray_pos, ray_dir)
             hit_background = 0
             
             contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
             if inter:
-                ray_pos = near_pos # move the ray start point to the intersection point
-
-                # if u == v and u % 200 == 0: # for debugging
-                #     voxel_index = self._to_voxel_index(near_pos)
-                #     print("u, v:", u, v, "near_pos:", near_pos, "ray_pos:", ray_pos, "voxel_index:", voxel_index.x, voxel_index.y, voxel_index.z)
-
+                # Ray start from intersection point inside the bounding box
+                ray_pos = near_pos
 
                 I = tm.vec3(0.0)
                 A = 0.0 # absorption (e.g: A.rgb)

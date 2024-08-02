@@ -1,7 +1,13 @@
 from common.plot import Plotter
 
+from setup.voxel_setup import Scene, NUM_XYZ, floor_height
+from data.np_grid import *
+from simulation.simulate_utils import *
+
+from scipy import ndimage
 import numpy as np
 import torch
+
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_dtype(torch.float32)
@@ -15,10 +21,6 @@ def generate_initial_wavefront(num_samplers_per_voxel : int, pos_perturbation_sc
                                       for z in range(num_z * sampler_multiplier)]) + position_perturbation
     initial_wavefront_dir = np.array([(0, -1, 0) for _ in range(num_x * num_z * (sampler_multiplier**3))])
     return initial_wavefront_pos, initial_wavefront_dir
-
-def compute_ior_gradient(ior_field: np.ndarray) -> np.ndarray:
-    grad_xyz = np.gradient(ior_field)
-    return np.stack(grad_xyz, axis=-1)
 
 @torch.jit.script
 def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Tensor, grad_xyz: torch.Tensor, IOR: torch.Tensor, step_size: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -51,7 +53,7 @@ def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Te
 
 def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, atten_grid: np.ndarray,
                                    initial_wavefront_pos: np.ndarray, initial_wavefront_dir: np.ndarray, 
-                                   plotter: Plotter,
+                                   plotter: Plotter|None,
                                    num_steps: int = 100, step_size: float = 1.0, num_show_images: int = 3) -> tuple[np.ndarray, np.ndarray]:
     
     stride = max(num_steps // (num_show_images-1), 1)
@@ -104,6 +106,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
         location_direction_grid[update_indices[:, 0], update_indices[:, 1], update_indices[:, 2]] = cur_dir[within_mask][update_mask]
         
         if num_show_images > 0 and cur_step in plot_step_indices:
+            assert plotter is not None, "The plotter should not be None when num_show_images > 0"
             plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {within_indices.shape[0]})")
 
     # Normalize the direction vectors after the simulation
@@ -127,14 +130,28 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
 # num_monte_carlo_iterations = 4
 # avg_irradiance_grid = run_monte_carlo_simulation(num_monte_carlo_iterations, sampler_multiplier, pos_perturbation_scale)
 
-def remove_under_floor(grid: np.ndarray, floor_height: int) -> np.ndarray:
-    grid[:, :floor_height, :] = 0
-    return grid
+def get_irrad_loc_dir(scene: Scene, sampler_multiplier: int, plotter: Plotter, gaussian_sigma: float = 0.8, 
+                      to_load_save: bool = True, num_show_images = 0) -> tuple[np.ndarray, np.ndarray]:
+    
+    POS_PERTURBATION_SCALE = 0.45
+    
+    if to_load_save and irrad_loc_dir_save_exists(sampler_multiplier):
+        raw_irradiance, local_diretion = load_irrad_loc_dir(sampler_multiplier)    
+    else:
+        step_size = 0.3 * (NUM_XYZ[1] / 100)
+        num_steps = int(1.0 * (NUM_XYZ[1]  / step_size))
+        num_show_images = 0
 
-def normalize_by_max(array: np.ndarray, max: int=255) -> np.ndarray:
-    array = array.astype(float)    
-    min_val = np.min(array)
-    max_val = np.max(array)
-    assert max_val > min_val, "max_val should be greater than min_val"
-    normalized = (array - min_val) / (max_val - min_val)    # normalize to 0-1
-    return np.round(normalized * max).astype(float)  # normalize to 0-max
+        initial_wavefront_pos, initial_wavefront_dir = generate_initial_wavefront(sampler_multiplier, POS_PERTURBATION_SCALE, *NUM_XYZ)
+
+        raw_irradiance, local_diretion = simulate_wavefront_propagation(scene.ior, scene.gradient, scene.attenuation,
+                                                        initial_wavefront_pos, initial_wavefront_dir, plotter, 
+                                                        num_steps, step_size, num_show_images)
+        if to_load_save:
+            save_irrad_loc_dir(raw_irradiance, local_diretion, sampler_multiplier)
+
+    raw_irradiance = remove_under_floor(raw_irradiance, floor_height=plotter.floor_height)
+    filtered_irradiance = ndimage.gaussian_filter(raw_irradiance, sigma=gaussian_sigma)
+    final_irradiance = normalize_by_max(filtered_irradiance)
+    return final_irradiance, local_diretion
+ 
