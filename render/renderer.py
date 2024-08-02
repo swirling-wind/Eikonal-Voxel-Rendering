@@ -37,15 +37,16 @@ class Renderer:
         self.atten = ti.field(dtype=ti.f32)
         self.scatter_strength = ti.field(dtype=ti.f32)
         self.anisotropy_factor = ti.field(dtype=ti.f32)
-        self.opaque = ti.field(dtype=ti.u8)
+        self.opaque = ti.field(dtype=ti.i8)
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.light_direction_noise = ti.field(dtype=ti.f32, shape=())
         self.light_color = ti.Vector.field(3, dtype=ti.f32, shape=())
 
-        self.cast_voxel_hit = ti.field(ti.i32, shape=())
-        self.cast_voxel_index = ti.Vector.field(3, ti.i32, shape=())
+        # For debugging
+        # self.cast_voxel_hit = ti.field(ti.i32, shape=())
+        # self.cast_voxel_index = ti.Vector.field(3, ti.i32, shape=())
 
         # Scene settings
         self.voxel_edges = voxel_edges
@@ -138,7 +139,7 @@ class Renderer:
         return voxel_color, is_light # [tm.vec3, ti.i32]
 
     @ti.func
-    def ray_march(self, p: tm.vec3, d: tm.vec3) -> ti.f32:  # floor's sdf
+    def floor_sdf(self, p: tm.vec3, d: tm.vec3) -> ti.f32:  # floor's sdf
         dist = inf
         if d[1] < -eps:
             dist = (self.floor_height[None] - p[1]) / d[1]
@@ -228,21 +229,19 @@ class Renderer:
         hit_light = 0
         closest, normal, c, hit_light, vx_idx = self.dda_voxel(pos, d)
 
-        ray_march_dist = self.ray_march(pos, d)
+        ray_march_dist = self.floor_sdf(pos, d) # floor's distance function
         if ray_march_dist < DIS_LIMIT and ray_march_dist < closest:
-            #  Floor hit
+            #  It's a floor hit and closer than voxel hit
             closest = ray_march_dist
             normal = self.sdf_normal()
             c = self.sdf_color()
 
-        # Highlight the selected voxel
-        if self.cast_voxel_hit[None]:
-            cast_vx_idx = self.cast_voxel_index[None]
+        if ti.static(True): # Highlight the selected voxel for debugging
+            cast_vx_idx = tm.vec3(0,20,0) # The index of the voxel to highlight
             if all(cast_vx_idx == vx_idx):
-                c = ti.Vector([1.0, 0.65, 0.0])
-                # For light sources, we actually invert the material to make it
-                # more obvious
-                hit_light = 1 - hit_light
+                c = ti.Vector([1.0, 0.65, 0.0]) # orange color
+                # For light sources, we actually invert the material
+                # hit_light = 1 - hit_light
         return closest, normal, c, hit_light
 
     @ti.kernel
@@ -322,7 +321,8 @@ class Renderer:
 
                 # --------------------------------------
                 # check if we are not outside of the volume
-                # TODO
+                if self.inside_particle_grid(self.round_idx(ray_pos)):
+                    break
 
 
             contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
@@ -352,7 +352,7 @@ class Renderer:
                 if not hit_light and normal.norm() != 0 and closest < 1e8: # type: ignore
                     d = out_dir(normal)
                     pos = hit_pos + 1e-4 * d
-                    throughput *= c
+                    throughput *= c # multiply color
 
                     if ti.static(use_directional_light):
                         dir_noise = ti.Vector([
@@ -451,11 +451,11 @@ class Renderer:
 
     @ti.func
     def set_voxel_data(self, idx, atten: ti.f32, scatter_strength: ti.f32, 
-                       anisotropy_factor: ti.f32, opaque: ti.u8):
+                       anisotropy_factor: ti.f32, opaque: ti.i8):
         self.atten[idx] = atten
         self.scatter_strength[idx] = scatter_strength
         self.anisotropy_factor[idx] = anisotropy_factor
-        self.opaque[idx] = opaque
+        self.opaque[idx] = ti.cast(opaque, ti.i8)
 
     @staticmethod
     @ti.func
