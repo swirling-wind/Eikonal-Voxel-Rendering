@@ -24,7 +24,7 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.0, 0.0, 2.0))
+        self._camera_pos = np.array((0.0, 0.0, 3.0))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -196,82 +196,74 @@ class Scene:
     #### IOR ####
     @property
     def ior(self) -> np.ndarray:
-        ior_grid = self.renderer.ior
-        return ior_grid if isinstance(ior_grid, np.ndarray) else ior_grid.to_numpy()
+        return self.renderer.ior.to_numpy()
 
     @ior.setter
     def ior(self, ior_grid: ti.types.ndarray()):
-        self.renderer.ior = ior_grid
+        self.renderer.ior.from_numpy(ior_grid)
 
     #### Gradient ####
     @property
     def gradient(self) -> np.ndarray:
-        grad_grid = self.renderer.grad
-        return grad_grid if isinstance(grad_grid, np.ndarray) else grad_grid.to_numpy()
-
+        return self.renderer.grad.to_numpy()
+        
     @gradient.setter
     def gradient(self, grad_field: ti.types.ndarray()):
-        self.renderer.grad = grad_field
+        self.renderer.grad.from_numpy(grad_field)    
     
     #### Irradiance ####
     @property
     def irradiance(self) -> np.ndarray:
-        irradiance_field = self.renderer.irrad
-        return irradiance_field if isinstance(irradiance_field, np.ndarray) else irradiance_field.to_numpy()
+        return self.renderer.irrad.to_numpy()
     
     @irradiance.setter
     def irradiance(self, irrad_field: ti.types.ndarray()):
-        self.renderer.irrad = irrad_field
+        self.renderer.irrad.from_numpy(irrad_field)
 
     #### Loc Dir ####
     @property
     def local_diretion(self) -> np.ndarray:
-        local_direction = self.renderer.loc_dir
-        return local_direction if isinstance(local_direction, np.ndarray) else local_direction.to_numpy()
-
+        return self.renderer.loc_dir.to_numpy()
+    
     @local_diretion.setter
     def local_diretion(self, loc_dir_field: ti.types.ndarray()):
-        self.renderer.loc_dir = loc_dir_field
+        self.renderer.loc_dir.from_numpy(loc_dir_field)
 
     #### Attenuation ####
     @property
     def attenuation(self) -> np.ndarray:
-        atten_grid = self.renderer.atten
-        return atten_grid if isinstance(atten_grid, np.ndarray) else atten_grid.to_numpy()
-
+        return self.renderer.atten.to_numpy()
+    
     @attenuation.setter
     def attenuation(self, atten_field: ti.types.ndarray()):
-        self.renderer.atten = atten_field
+        self.renderer.atten.from_numpy(atten_field)
 
     #### Scatter strength ####
     @property
     def scatter_strength(self) -> np.ndarray:
-        scatter_strength = self.renderer.scatter_strength
-        return scatter_strength if isinstance(scatter_strength, np.ndarray) else scatter_strength.to_numpy()
-
+        return self.renderer.scatter_strength.to_numpy()
+    
     @scatter_strength.setter
     def scatter_strength(self, scatter_field: ti.types.ndarray()):
-        self.renderer.scatter_strength = scatter_field
+        self.renderer.scatter_strength.from_numpy(scatter_field)
 
     #### Anisotropy factor ####
     @property
     def anisotropy_factor(self) -> np.ndarray:
-        anisotropy_factor = self.renderer.anisotropy_factor
-        return anisotropy_factor if isinstance(anisotropy_factor, np.ndarray) else anisotropy_factor.to_numpy()
+        return self.renderer.anisotropy_factor.to_numpy()
     
     @anisotropy_factor.setter
     def anisotropy_factor(self, aniso_field: ti.types.ndarray()):
-        self.renderer.anisotropy_factor = aniso_field
+        self.renderer.anisotropy_factor.from_numpy(aniso_field)
     
     #### Opaque ####
     @property
     def opaque(self) -> np.ndarray:
-        opaque_grid = self.renderer.opaque
-        return opaque_grid if isinstance(opaque_grid, np.ndarray) else opaque_grid.to_numpy()
+        return self.renderer.opaque.to_numpy()
     
     @opaque.setter
     def opaque(self, opaque_field: ti.types.ndarray()):
-        self.renderer.opaque = opaque_field
+        self.renderer.opaque.from_numpy(opaque_field)
 
 
 
