@@ -1,6 +1,6 @@
 import taichi as ti
 import taichi.math as tm
-from common.math_utils import (eps, inf, out_dir, ray_aabb_intersection)
+from common.math_utils import *
 from taichi.types import vector, matrix
 
 MAX_RAY_DEPTH = 3
@@ -274,58 +274,70 @@ class Renderer:
 
     @ti.kernel
     def ray_marching(self):        
-        for u, v in self.color_buffer:            
+        for u, v in self.color_buffer:
+            ray_pos = self.camera_pos[None]
+            ray_dir = self.get_cast_dir(u, v)
+           
+            bbox_min = self.bbox[0]
+            bbox_max = self.bbox[1]
+            inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, ray_pos, ray_dir)
+            hit_background = 0
 
             contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
-            I = tm.vec3(0.0)
+            if inter:
+                I = tm.vec3(0.0)
 
-            A = 0.0 # absorption (e.g: A.rgb)
-            # T = 1.0 # initial transmittance is 1.0, that means all light pass through without reflection or refraction
-            n = 1.0 # inial IOR is 1.0
+                A = 0.0 # absorption (e.g: A.rgb)
+                # T = 1.0 # initial transmittance is 1.0, that means all light pass through without reflection or refraction
+                n = 1.0 # inial IOR is 1.0
 
-            step_size = 1.0
-            ray_pos = self.camera_pos[None]
-            ray_dir = self.get_cast_dir(u, v)
+                step_size = 1.0
+                
+                for _cur_step in range(MAX_MARCHING_STEPS):
+                    gradient = self.grad[self.round_idx(ray_pos)]
+                    voxelIrrad = self.irrad[self.round_idx(ray_pos)]
+                    # voxelLightDir = self.loc_dir[self.round_idx(ray_pos)]
 
-            for _cur_step in range(MAX_MARCHING_STEPS):
-                gradient = self.grad[self.round_idx(ray_pos)]
-                voxelIrrad = self.irrad[self.round_idx(ray_pos)]
-                # voxelLightDir = self.loc_dir[self.round_idx(ray_pos)]
+                    voxelAtt = self.atten[self.round_idx(ray_pos)]
+                    scatterStrength = self.scatter_strength[self.round_idx(ray_pos)]
+                    # anisotropyFactor = self.anisotropy_factor[self.round_idx(ray_pos)]
+                    # anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
+                    # voxelOpaqueData = self.opaque[self.round_idx(ray_pos)]               
 
-                voxelAtt = self.atten[self.round_idx(ray_pos)]
-                scatterStrength = self.scatter_strength[self.round_idx(ray_pos)]
-                # anisotropyFactor = self.anisotropy_factor[self.round_idx(ray_pos)]
-                # anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
-                # voxelOpaqueData = self.opaque[self.round_idx(ray_pos)]               
+                    # --------------------------------------
+                    # Compute Attenuation factor
+                    A += step_size * voxelAtt
 
-                # --------------------------------------
-                # Compute Attenuation factor
-                A += step_size * voxelAtt
+                    # --------------------------------------
+                    # Compute scattering term
+                    Is = voxelIrrad
 
-                # --------------------------------------
-                # Compute scattering term
-                Is = voxelIrrad
+                    # --------------------------------------
+                    # Compute new direction and refraction index
+                    oldPos = ray_pos
+                    ray_dir += step_size * gradient / n
+                    ray_pos += step_size * ray_dir / (n * n)
+                    n += tm.dot(gradient, ray_pos - oldPos)
 
-                # --------------------------------------
-                # Compute new direction and refraction index
-                oldPos = ray_pos
-                ray_dir += step_size * gradient / n
-                ray_pos += step_size * ray_dir / (n * n)
-                n += tm.dot(gradient, ray_pos - oldPos)
+                    # --------------------------------------
+                    # Compute combined intensity per voxel and compute final integral
+                    Ic = scatterStrength * Is
+                    I += Ic * tm.exp(-A)
 
-                # --------------------------------------
-                # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is
-                I += Ic * tm.exp(-A)
+                    # --------------------------------------
+                    # check if we are not outside of the volume
+                    if self.inside_particle_grid(self.round_idx(ray_pos)):
+                        break
+            
+                contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
+            else:
+                hit_background = 1
+            
+            if hit_background:
+                contrib = self.background_color[None]
 
-                # --------------------------------------
-                # check if we are not outside of the volume
-                if self.inside_particle_grid(self.round_idx(ray_pos)):
-                    break
-
-
-            contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
+           
             self.color_buffer[u, v] += contrib
 
 

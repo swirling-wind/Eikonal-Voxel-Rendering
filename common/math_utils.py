@@ -21,7 +21,8 @@ def out_dir(n: tm.vec3):
 
 
 @ti.func
-def ray_aabb_intersection(box_min, box_max, o, d):
+def ray_aabb_intersection(box_min: tm.vec3, box_max: tm.vec3, 
+                          o: tm.vec3, d: tm.vec3):
     intersect = 1
 
     near_int = -inf
@@ -45,6 +46,36 @@ def ray_aabb_intersection(box_min, box_max, o, d):
         intersect = 0
     return intersect, near_int, far_int
 
+@ti.func
+def ray_aabb_intersection_point(box_min: tm.vec3, box_max: tm.vec3,
+                                eye_pos: tm.vec3, dir: tm.vec3):
+    intersect = 1
+
+    near_int = -inf
+    far_int = inf
+
+    near_point = ti.Vector([0.0, 0.0, 0.0])
+    # far_point = ti.Vector([0.0, 0.0, 0.0])
+
+    for i in ti.static(range(3)):
+        if dir[i] == 0:
+            if eye_pos[i] < box_min[i] or eye_pos[i] > box_max[i]:
+                intersect = 0
+        else:
+            i1 = (box_min[i] - eye_pos[i]) / dir[i]
+            i2 = (box_max[i] - eye_pos[i]) / dir[i]
+
+            new_far_int = ti.max(i1, i2)
+            new_near_int = ti.min(i1, i2)
+
+            far_int = ti.min(new_far_int, far_int)
+            near_int = ti.max(new_near_int, near_int)
+
+    if near_int > far_int:
+        intersect = 0
+
+    near_point = eye_pos + dir * near_int
+    return intersect, near_point
 
 def np_normalize(v):
     # https://stackoverflow.com/a/51512965/12003165

@@ -92,6 +92,7 @@ def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), fl
     add_glass(glass_field, tm.vec3(-24, floor_ratio * 64, -128), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
     add_bunny(bunny_field, tm.vec3(3, floor_ratio * 64, 0), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
+    # for debugging
     scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
 
 def setup_voxel_scene(num_x: int, num_y: int, num_z: int) -> tuple[Scene, int]:
