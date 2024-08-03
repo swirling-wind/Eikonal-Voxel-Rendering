@@ -87,7 +87,7 @@ class Renderer:
 
         self.ior.fill(1.0)
 
-        self.atten.fill(0.001)
+        self.atten.fill(0.0)
         self.scatter_strength.fill(0.0)
 
 
@@ -290,21 +290,24 @@ class Renderer:
 
     @ti.func
     def marching(self, u: ti.i32, v: ti.i32):
-        pos = self.camera_pos[None]
+        cam_pos = self.camera_pos[None]
         d = self.get_cast_dir(u, v)
         
         # Leave safe margin to avoid self-intersection
         bbox_min = self.bbox[0]
         bbox_max = self.bbox[1]
-        inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, pos, d)
+        inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, cam_pos, d)
         hit_background = 0
+
+        hit_floor = 0
+        floor_voxel_index = self._to_voxel_index(near_pos)
         
         contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
         if inter:            
             pos = near_pos # Ray start from intersection point inside the bounding box
   
-            MAX_MARCHING_STEPS = 100
+            MAX_MARCHING_STEPS = 150
 
             I = tm.vec3(0.0)
             A = 0.0 # absorption (e.g: A.rgb)
@@ -343,12 +346,17 @@ class Renderer:
                 # check if we are not outside of the volume
                 if (not self.pos_inside_particle_grid(pos)): # or (not self.inside_grid(voxel_index)):
                     break
-        
-            contrib = I + self.background_color[None] * tm.exp(-A)
-        else:
-            hit_background = 1
-        
-        if hit_background:
+
+                if pos[1] < self.floor_height[None]:
+                    hit_floor = 1
+                    floor_voxel_index = voxel_index
+                    break
+
+            if hit_floor: # hit the floor (add floor color and floor position's irradiance)
+                contrib = I + self.floor_color[None] * tm.exp(-A) + self.irrad[floor_voxel_index] / 255.0 * 1.2
+            else: # enter the bounding box and finally hit the background
+                contrib = I + self.background_color[None] * tm.exp(-A)
+        else: # directly hit the background without entering the bounding box
             contrib = self.background_color[None]
         
         self.color_buffer[u, v] += contrib
