@@ -321,7 +321,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += step_size * voxelAtt
+                A += step_size * voxelAtt * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term
@@ -342,11 +342,9 @@ class Renderer:
                 #  --------------------------------------
                 # check if we are not outside of the volume
                 if (not self.pos_inside_particle_grid(pos)): # or (not self.inside_grid(voxel_index)):
-                    if tm.length(I) < 0.001:
-                        hit_background = 1                    
                     break
         
-            contrib = I # tm.vec3(u / 64, v / 36, 0.5)
+            contrib = I + self.background_color[None] * tm.exp(-A)
         else:
             hit_background = 1
         
