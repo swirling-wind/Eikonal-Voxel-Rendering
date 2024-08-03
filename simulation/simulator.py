@@ -22,7 +22,7 @@ def generate_initial_wavefront(num_samplers_per_voxel : int, pos_perturbation_sc
     initial_wavefront_dir = np.array([(0, -1, 0) for _ in range(num_x * num_z * (sampler_multiplier**3))])
     return initial_wavefront_pos, initial_wavefront_dir
 
-@torch.jit.script
+# @torch.jit.script
 def update_wavefront(pos: torch.Tensor, dir: torch.Tensor, within_mask: torch.Tensor, grad_xyz: torch.Tensor, IOR: torch.Tensor, step_size: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     indices = pos.int()
     # Obtain the refractive index at the current position
