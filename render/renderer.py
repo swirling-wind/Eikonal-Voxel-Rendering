@@ -328,7 +328,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term
-                Is = tm.vec3(voxelIrrad / 255.0 / 4.0)
+                Is = tm.vec3(voxelIrrad / 255.0 / 2.0)
 
                 # --------------------------------------
                 # check if we are not outside of the volume

@@ -9,7 +9,7 @@ from render.renderer import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (640, 360)
+SCREEN_RES = (800, 600)
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
 ====================================================
@@ -150,8 +150,7 @@ class Scene:
     def display(self, ray_marching=False):
         print(HELP_MSG)
         self.window = ti.ui.Window("Path Tracing",
-                                #    SCREEN_RES,.
-                                    (1280, 720),
+                                   SCREEN_RES,
                                    vsync=True)
         self.camera = Camera(self.window, up=UP_DIR)
         self.renderer.set_camera_pos(*self.camera.position)

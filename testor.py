@@ -5,7 +5,7 @@ from simulation.simulator import get_irrad_loc_dir, compute_ior_gradient
 import taichi as ti
 from scipy import ndimage
 # debug=True to check boundary access
-ti.init(arch=ti.gpu, debug=True)
+ti.init(arch=ti.gpu)
 
 scene, floor_height = setup_voxel_scene()
 print("Scene setup done. Starting simulation...")
