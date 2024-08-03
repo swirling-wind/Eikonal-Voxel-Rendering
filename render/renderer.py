@@ -280,11 +280,13 @@ class Renderer:
 
     @ti.kernel
     def ray_marching(self):        
-        ti.loop_config(parallelize=True)
-        # for u, v in self.color_buffer:
-        for u in range(self.color_buffer.shape[0]):
-            for v in range(self.color_buffer.shape[1]):
-                self.marching(u, v)
+        for u, v in self.color_buffer:
+            self.marching(u, v)
+        # ti.loop_config(parallelize=True)
+        # for u in range(self.color_buffer.shape[0]):
+        #     for v in range(self.color_buffer.shape[1]):
+        #     self.marching(u, v)
+                
 
     @ti.func
     def marching(self, u: ti.i32, v: ti.i32):
@@ -292,8 +294,8 @@ class Renderer:
         d = self.get_cast_dir(u, v)
         
         # Leave safe margin to avoid self-intersection
-        bbox_min = self.bbox[0]# - tm.vec3(1e-3)
-        bbox_max = self.bbox[1]# + tm.vec3(1e-3)
+        bbox_min = self.bbox[0]
+        bbox_max = self.bbox[1]
         inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, pos, d)
         hit_background = 0
         
@@ -301,8 +303,7 @@ class Renderer:
 
         if inter:            
             pos = near_pos # Ray start from intersection point inside the bounding box
-            # print(u, v, pos, d)
-
+  
             MAX_MARCHING_STEPS = 100
 
             I = tm.vec3(0.0)
@@ -324,7 +325,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term
-                Is = tm.vec3(voxelIrrad)
+                Is = tm.vec3(voxelIrrad / 255.0 / 4.0)
 
                 # --------------------------------------
                 # check if we are not outside of the volume
@@ -341,9 +342,8 @@ class Renderer:
                 #  --------------------------------------
                 # check if we are not outside of the volume
                 if (not self.pos_inside_particle_grid(pos)): # or (not self.inside_grid(voxel_index)):
-                    if n == 1.0:
-                        hit_background = 1
-                    
+                    if tm.length(I) < 0.001:
+                        hit_background = 1                    
                     break
         
             contrib = I # tm.vec3(u / 64, v / 36, 0.5)
