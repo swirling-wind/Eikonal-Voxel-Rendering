@@ -9,7 +9,7 @@ from render.renderer import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (1280, 720)
+SCREEN_RES = (128, 72)
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
 ====================================================
@@ -160,23 +160,27 @@ class Scene:
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
 
+        rendered = False
+
         while self.window.running:
-            should_reset_framebuffer = False
+            should_reset_framebuffer = False            
             if self.camera.update_camera():
                 self.renderer.set_camera_pos(*self.camera.position)
                 look_at = self.camera.look_at
                 self.renderer.set_look_at(*look_at)
                 should_reset_framebuffer = True
-
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
 
             # Could Use for _ in range(num_samples) to adjust samples per pixel (spp) 
-            if ray_marching:
-                self.renderer.ray_marching()
-            else:
-                self.renderer.path_tracing()
-            self.renderer.current_spp += 1
+            if not rendered:
+                if ray_marching:                    
+                        self.renderer.ray_marching()
+                        self.renderer.current_spp += 1
+                        # rendered = True
+                else:
+                    self.renderer.path_tracing()
+                    self.renderer.current_spp += 1
 
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot

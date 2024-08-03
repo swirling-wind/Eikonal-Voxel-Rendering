@@ -12,12 +12,11 @@ def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray
     return xx, yy, zz
 
 class Plotter:
-    def __init__(self, sampler_multiplier: int, floor_height: int, ior_field: np.ndarray):
+    def __init__(self, sampler_multiplier: int, floor_height: int):
         self.sampler_multiplier = sampler_multiplier
         self.floor_height = floor_height
-        self.ior_field = ior_field
 
-    def plot_gradient(self, grad_xyz: np.ndarray, threshold: float = 0.1, alpha: float = 0.5):
+    def plot_gradient(self, grad_xyz: np.ndarray, threshold: float = 0.1, alpha: float = 0.05):
         fig = plt.figure(figsize=FIG_SIZE)
         ax = fig.add_subplot(111, projection='3d')
         ax.set_box_aspect([1,1,1])
@@ -37,31 +36,31 @@ class Plotter:
         plt.show()
 
     
-    def plot_wavefront_position(self, pos: np.ndarray, dir: np.ndarray, title: str, num_shown_points: int = 500):
+    def plot_wavefront(self, ior_field: np.ndarray, pos: np.ndarray|None, dir: np.ndarray|None, title: str = "IOR and wavefront", num_shown_points: int = 500):
         fig = plt.figure(figsize=FIG_SIZE)
         ax = fig.add_subplot(111, projection='3d')
         ax.set_box_aspect([1,1,1])
-        ax.set_xlim(0, self.ior_field.shape[0])
-        ax.set_ylim(0, self.ior_field.shape[1])
-        ax.set_zlim(0, self.ior_field.shape[2])
+        ax.set_xlim(0, ior_field.shape[0])
+        ax.set_ylim(0, ior_field.shape[1])
+        ax.set_zlim(0, ior_field.shape[2])
         ax.set_xlabel('X Axis')
         ax.set_ylabel('Y Axis')
         ax.set_zlabel('Z Axis')
         ax.set_title(title)
-        subsample_indices = np.arange(0, len(pos), PLOT_STRIDE_LENGTH * self.sampler_multiplier)
-        ax.quiver(pos[subsample_indices, 0], pos[subsample_indices, 1], pos[subsample_indices, 2],
-                    dir[subsample_indices, 0], dir[subsample_indices, 1], dir[subsample_indices, 2],
-                    color='green', length=1)
-
-        x_points, y_points, z_points = np.where(self.ior_field > 1.0)
+        if pos is not None and dir is not None:
+            subsample_indices = np.arange(0, len(pos), PLOT_STRIDE_LENGTH * self.sampler_multiplier)
+            ax.quiver(pos[subsample_indices, 0], pos[subsample_indices, 1], pos[subsample_indices, 2],
+                        dir[subsample_indices, 0], dir[subsample_indices, 1], dir[subsample_indices, 2],
+                        color='green', length=1)
+        x_points, y_points, z_points = np.where(ior_field > 1.0)
         subsample_num = max(1, len(x_points) // num_shown_points)
         subsample_indices= np.arange(0, len(x_points), subsample_num)
         ax.scatter(x_points[subsample_indices], y_points[subsample_indices], z_points[subsample_indices], color='blue', alpha=0.1)
         ax.view_init(elev=90, azim=-90)
-        ax.plot_surface(*floor_surface(self.ior_field.shape[0], self.ior_field.shape[1], self.floor_height), color='red', alpha=0.5)
+        ax.plot_surface(*floor_surface(ior_field.shape[0], ior_field.shape[1], self.floor_height), color='red', alpha=0.5)
         plt.show()
 
-    def plot_irradiance_grid(self, radiometric_grid: np.ndarray, threshold=3.0):
+    def plot_irradiance_grid(self, radiometric_grid: np.ndarray, threshold=40.0):
         fig = plt.figure(figsize=FIG_SIZE)
         ax = fig.add_subplot(111, projection='3d')
         ax.set_box_aspect([1, 1, 1])

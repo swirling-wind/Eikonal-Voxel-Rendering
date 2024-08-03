@@ -107,7 +107,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
         
         if num_show_images > 0 and cur_step in plot_step_indices:
             assert plotter is not None, "The plotter should not be None when num_show_images > 0"
-            plotter.plot_wavefront_position(cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {within_indices.shape[0]})")
+            plotter.plot_wavefront(ior_field, cur_pos.cpu().numpy(), cur_dir.cpu().numpy(), f"Step {cur_step} (Total: {within_indices.shape[0]})")
 
     # Normalize the direction vectors after the simulation
     direction_lengths = torch.norm(location_direction_grid, dim=-1, keepdim=True)
@@ -140,7 +140,6 @@ def get_irrad_loc_dir(scene: Scene, sampler_multiplier: int, plotter: Plotter, g
     else:
         step_size = 0.3 * (NUM_XYZ[1] / 100)
         num_steps = int(1.0 * (NUM_XYZ[1]  / step_size))
-        num_show_images = 0
 
         initial_wavefront_pos, initial_wavefront_dir = generate_initial_wavefront(sampler_multiplier, POS_PERTURBATION_SCALE, *NUM_XYZ)
 

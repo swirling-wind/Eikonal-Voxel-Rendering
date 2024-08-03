@@ -131,7 +131,7 @@ class Renderer:
         voxel_index = self._to_voxel_index(pos)
         voxel_color = ti.Vector([0.0, 0.0, 0.0])
         is_light = 0
-        if self.inside_particle_grid(voxel_index):
+        if self.ipos_inside_particle_grid(voxel_index):
             voxel_color = self.voxel_color[voxel_index] * (1.0 / 255)
             if self.voxel_material[voxel_index] == 2:
                 is_light = 1
@@ -189,7 +189,7 @@ class Renderer:
             hit_pos = ti.Vector([0.0, 0.0, 0.0])
             while running:
                 last_sample = int(self.query_density(ipos))
-                if not self.inside_particle_grid(ipos):
+                if not self.ipos_inside_particle_grid(ipos):
                     running = 0
 
                 if last_sample:
@@ -215,9 +215,16 @@ class Renderer:
         return hit_distance, normal, c, hit_light, voxel_index
 
     @ti.func
-    def inside_particle_grid(self, ipos: ti.i32) -> bool:
+    def ipos_inside_particle_grid(self, ipos: ti.i32) -> bool:
         # Check if the voxel is inside the bounding box
         pos = ipos * self.voxel_dx
+        return self.bbox[0][0] <= pos[0] and pos[0] < self.bbox[1][
+            0] and self.bbox[0][1] <= pos[1] and pos[1] < self.bbox[1][
+                1] and self.bbox[0][2] <= pos[2] and pos[2] < self.bbox[1][2]
+    
+    @ti.func
+    def pos_inside_particle_grid(self, pos: ti.f32) -> bool:
+        # Check if the voxel is inside the bounding box
         return self.bbox[0][0] <= pos[0] and pos[0] < self.bbox[1][
             0] and self.bbox[0][1] <= pos[1] and pos[1] < self.bbox[1][
                 1] and self.bbox[0][2] <= pos[2] and pos[2] < self.bbox[1][2]
@@ -237,12 +244,12 @@ class Renderer:
             normal = self.sdf_normal()
             c = self.sdf_color()
 
-        if ti.static(True): # Highlight the selected voxel for debugging
-            cast_vx_idx = tm.vec3(0,20,0) # The index of the voxel to highlight
-            if all(cast_vx_idx == vx_idx):
-                c = ti.Vector([1.0, 0.65, 0.0]) # orange color
-                # For light sources, we actually invert the material
-                # hit_light = 1 - hit_light
+        # if ti.static(True): # Highlight the selected voxel for debugging
+        #     cast_vx_idx = tm.vec3(0,20,0) # The index of the voxel to highlight
+        #     if all(cast_vx_idx == vx_idx):
+        #         c = ti.Vector([1.0, 0.65, 0.0]) # orange color
+        #         # For light sources, we actually invert the material
+        #         # hit_light = 1 - hit_light
         return closest, normal, c, hit_light
 
     @ti.kernel
@@ -275,6 +282,7 @@ class Renderer:
 
     @ti.kernel
     def ray_marching(self):
+        # ti.loop_config(serialize=True) # Serializes the next for loop
         for u, v in self.color_buffer:
             ray_pos = self.camera_pos[None]
             ray_dir = self.get_cast_dir(u, v)
@@ -291,20 +299,29 @@ class Renderer:
                 # Ray start from intersection point inside the bounding box
                 ray_pos = near_pos
 
-                I = tm.vec3(0.0)
-                A = 0.0 # absorption (e.g: A.rgb)
+                # I = tm.vec3(0.0)
+                # A = 0.0 # absorption (e.g: A.rgb)
                 # T = 1.0 # initial transmittance is 1.0, that means all light pass through without reflection or refraction
                 n = 1.0 # inial IOR is 1.0
-                step_size = 1.0
+                step_size = 0.001
 
                 for _cur_step in range(MAX_MARCHING_STEPS):
-                    voxel_index = self._to_voxel_index(ray_pos)
-                    gradient = self.grad[voxel_index]
+                    pass
+                    # print(ray_pos, ray_dir, n)
+                    # if not self.pos_inside_particle_grid(ray_pos):
+                    #     print("Outside of the volume")
+                    #     break
+                    # else:
+                    #     print("continue")
+
+                    # voxel_index = self._to_voxel_index(ray_pos)
+                    # gradient = self.grad[voxel_index]
+
                     # voxelIrrad = self.irrad[voxel_index]
                 #     # voxelLightDir = self.loc_dir[voxel_index]
 
                 #     voxelAtt = self.atten[voxel_index]
-                #     scatterStrength = self.scatter_strength[voxel_index]
+                # scatterStrength = self.scatter_strength[voxel_index]
                 #     # anisotropyFactor = self.anisotropy_factor[self.round_idx(voxel_index)]
                 #     # anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
                 #     # voxelOpaqueData = self.opaque[self.round_idx(voxel_index)]               
@@ -319,22 +336,20 @@ class Renderer:
 
                 #     # --------------------------------------
                 #     # Compute new direction and refraction index
-                #     oldPos = ray_pos
-                #     ray_dir += step_size * gradient / n
-                #     ray_pos += step_size * ray_dir / (n * n)
-                #     n += tm.dot(gradient, ray_pos - oldPos)
 
-                #     # --------------------------------------
-                #     # Compute combined intensity per voxel and compute final integral
-                #     Ic = scatterStrength * Is
-                #     I += Ic * tm.exp(-A)
+                    # --------------------------------------
+                    # check if we are not outside of the volume
+                    # oldPos = ray_pos
+                    # ray_dir += step_size * gradient
+                    # ray_pos += step_size * ray_dir / n
+                    # n += tm.dot(gradient, ray_pos - oldPos)
 
-                #     # --------------------------------------
-                #     # check if we are not outside of the volume
-                #     if self.inside_particle_grid(voxel_index):
-                #         break
-            
-                contrib += tm.vec3(u / 1280, v / 720, tm.clamp(0.1 * ray_pos[1], 0, 1))
+                    # --------------------------------------
+                    # Compute combined intensity per voxel and compute final integral
+                    # Ic = scatterStrength * Is
+                    # I += Ic * tm.exp(-A)
+          
+                contrib = tm.vec3(u / 128, v / 72, 0.5)
             else:
                 hit_background = 1
             

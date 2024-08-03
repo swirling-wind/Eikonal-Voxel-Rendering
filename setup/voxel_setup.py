@@ -95,7 +95,7 @@ def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), fl
     add_bunny(bunny_field, tm.vec3(3, floor_ratio * 64, 0), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
     # for debugging
-    scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
+    # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
 
 def setup_voxel_scene() -> tuple[Scene, int]:
     global scene, bunny_field, glass_field
