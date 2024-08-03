@@ -9,7 +9,7 @@ from render.renderer import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (128, 72)
+SCREEN_RES = (64, 36)
 UP_DIR = (0, 1, 0)
 HELP_MSG = '''
 ====================================================
@@ -150,7 +150,8 @@ class Scene:
     def display(self, ray_marching=False):
         print(HELP_MSG)
         self.window = ti.ui.Window("Path Tracing",
-                                   SCREEN_RES,
+                                #    SCREEN_RES,
+                                    (640, 360),
                                    vsync=True)
         self.camera = Camera(self.window, up=UP_DIR)
         self.renderer.set_camera_pos(*self.camera.position)
@@ -163,21 +164,21 @@ class Scene:
         rendered = False
 
         while self.window.running:
-            should_reset_framebuffer = False            
-            if self.camera.update_camera():
-                self.renderer.set_camera_pos(*self.camera.position)
-                look_at = self.camera.look_at
-                self.renderer.set_look_at(*look_at)
-                should_reset_framebuffer = True
-            if should_reset_framebuffer:
-                self.renderer.reset_framebuffer()
+            # should_reset_framebuffer = False            
+            # if self.camera.update_camera():
+            #     self.renderer.set_camera_pos(*self.camera.position)
+            #     look_at = self.camera.look_at
+            #     self.renderer.set_look_at(*look_at)
+            #     should_reset_framebuffer = True
+            # if should_reset_framebuffer:
+            #     self.renderer.reset_framebuffer()
 
             # Could Use for _ in range(num_samples) to adjust samples per pixel (spp) 
             if not rendered:
                 if ray_marching:                    
                         self.renderer.ray_marching()
                         self.renderer.current_spp += 1
-                        # rendered = True
+                        rendered = True
                 else:
                     self.renderer.path_tracing()
                     self.renderer.current_spp += 1

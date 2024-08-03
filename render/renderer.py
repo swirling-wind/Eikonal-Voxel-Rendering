@@ -8,8 +8,6 @@ use_directional_light = True
 
 DIS_LIMIT = 100
 
-MAX_MARCHING_STEPS = 128
-
 @ti.data_oriented
 class Renderer:
     def __init__(self, dx: float, image_res: tuple[int, int], up: tuple, voxel_edges: float, exposure: float=3.0):
@@ -281,83 +279,81 @@ class Renderer:
         return d
 
     @ti.kernel
-    def ray_marching(self):
-        # ti.loop_config(serialize=True) # Serializes the next for loop
-        for u, v in self.color_buffer:
-            ray_pos = self.camera_pos[None]
-            ray_dir = self.get_cast_dir(u, v)
-           
-            # Leave safe margin to avoid self-intersection
-            bbox_min = self.bbox[0]# - tm.vec3(1e-3)
-            bbox_max = self.bbox[1]# + tm.vec3(1e-3)
-            inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, ray_pos, ray_dir)
-            hit_background = 0
-            
-            contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
+    def ray_marching(self):        
+        ti.loop_config(parallelize=True)
+        # for u, v in self.color_buffer:
+        for u in range(self.color_buffer.shape[0]):
+            for v in range(self.color_buffer.shape[1]):
+                self.marching(u, v)
 
-            if inter:
-                # Ray start from intersection point inside the bounding box
-                ray_pos = near_pos
+    @ti.func
+    def marching(self, u: ti.i32, v: ti.i32):
+        pos = self.camera_pos[None]
+        d = self.get_cast_dir(u, v)
+        
+        # Leave safe margin to avoid self-intersection
+        bbox_min = self.bbox[0]# - tm.vec3(1e-3)
+        bbox_max = self.bbox[1]# + tm.vec3(1e-3)
+        inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, pos, d)
+        hit_background = 0
+        
+        contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
-                # I = tm.vec3(0.0)
-                # A = 0.0 # absorption (e.g: A.rgb)
-                # T = 1.0 # initial transmittance is 1.0, that means all light pass through without reflection or refraction
-                n = 1.0 # inial IOR is 1.0
-                step_size = 0.001
+        if inter:            
+            pos = near_pos # Ray start from intersection point inside the bounding box
+            # print(u, v, pos, d)
 
-                for _cur_step in range(MAX_MARCHING_STEPS):
-                    pass
-                    # print(ray_pos, ray_dir, n)
-                    # if not self.pos_inside_particle_grid(ray_pos):
-                    #     print("Outside of the volume")
-                    #     break
-                    # else:
-                    #     print("continue")
+            MAX_MARCHING_STEPS = 100
 
-                    # voxel_index = self._to_voxel_index(ray_pos)
-                    # gradient = self.grad[voxel_index]
+            I = tm.vec3(0.0)
+            A = 0.0 # absorption (e.g: A.rgb)
+            step_size = self.voxel_dx
+            n = 1.0
 
-                    # voxelIrrad = self.irrad[voxel_index]
-                #     # voxelLightDir = self.loc_dir[voxel_index]
+            for _cur_step in range(MAX_MARCHING_STEPS):
+                voxel_index = self._to_voxel_index(pos)
+                gradient = self.grad[voxel_index]
+                voxelIrrad = self.irrad[voxel_index]
 
-                #     voxelAtt = self.atten[voxel_index]
-                # scatterStrength = self.scatter_strength[voxel_index]
-                #     # anisotropyFactor = self.anisotropy_factor[self.round_idx(voxel_index)]
-                #     # anisotropyFactorSquared = anisotropyFactor * anisotropyFactor
-                #     # voxelOpaqueData = self.opaque[self.round_idx(voxel_index)]               
+                voxelAtt = self.atten[voxel_index]
+                scatterStrength = self.scatter_strength[voxel_index]
 
-                #     # --------------------------------------
-                #     # Compute Attenuation factor
-                #     A += step_size * voxelAtt
+                # --------------------------------------
+                # Compute Attenuation factor
+                A += step_size * voxelAtt
 
-                #     # --------------------------------------
-                #     # Compute scattering term
-                #     Is = voxelIrrad
+                # --------------------------------------
+                # Compute scattering term
+                Is = tm.vec3(voxelIrrad)
 
-                #     # --------------------------------------
-                #     # Compute new direction and refraction index
+                # --------------------------------------
+                # check if we are not outside of the volume
+                oldPos = pos
+                d += step_size * gradient
+                pos += step_size * d / n
+                n += tm.dot(gradient, pos - oldPos) * self.voxel_inv_dx
 
-                    # --------------------------------------
-                    # check if we are not outside of the volume
-                    # oldPos = ray_pos
-                    # ray_dir += step_size * gradient
-                    # ray_pos += step_size * ray_dir / n
-                    # n += tm.dot(gradient, ray_pos - oldPos)
+                #  --------------------------------------
+                # Compute combined intensity per voxel and compute final integral
+                Ic = scatterStrength * Is
+                I += Ic * tm.exp(-A)
 
-                    # --------------------------------------
-                    # Compute combined intensity per voxel and compute final integral
-                    # Ic = scatterStrength * Is
-                    # I += Ic * tm.exp(-A)
-          
-                contrib = tm.vec3(u / 128, v / 72, 0.5)
-            else:
-                hit_background = 1
-            
-            if hit_background:
-                contrib = self.background_color[None]
-
-           
-            self.color_buffer[u, v] += contrib
+                #  --------------------------------------
+                # check if we are not outside of the volume
+                if (not self.pos_inside_particle_grid(pos)): # or (not self.inside_grid(voxel_index)):
+                    if n == 1.0:
+                        hit_background = 1
+                    
+                    break
+        
+            contrib = I # tm.vec3(u / 64, v / 36, 0.5)
+        else:
+            hit_background = 1
+        
+        if hit_background:
+            contrib = self.background_color[None]
+        
+        self.color_buffer[u, v] += contrib
 
 
     @ti.kernel
