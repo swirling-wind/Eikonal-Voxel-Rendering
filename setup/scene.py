@@ -160,7 +160,6 @@ class Scene:
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
 
-        rendered = False
 
         while self.window.running:
             should_reset_framebuffer = False            
@@ -173,14 +172,14 @@ class Scene:
                 self.renderer.reset_framebuffer()
 
             # Could Use for _ in range(num_samples) to adjust samples per pixel (spp) 
-            if not rendered:
-                if ray_marching:                    
-                        self.renderer.ray_marching()
-                        self.renderer.current_spp += 1
-                        # rendered = True
-                else:
-                    self.renderer.path_tracing()
-                    self.renderer.current_spp += 1
+  
+            if ray_marching:                    
+                self.renderer.ray_marching()
+                self.renderer.current_spp += 1
+                # rendered = True
+            else:
+                self.renderer.path_tracing()
+                self.renderer.current_spp += 1
 
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot

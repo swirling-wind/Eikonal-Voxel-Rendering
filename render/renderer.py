@@ -353,7 +353,7 @@ class Renderer:
                     break
 
             if hit_floor: # hit the floor (add floor color and floor position's irradiance)
-                contrib = I + self.floor_color[None] * tm.exp(-A) + self.irrad[floor_voxel_index] / 255.0 * 1.2
+                contrib = I + (self.floor_color[None] + self.irrad[floor_voxel_index] / 255.0 * 1.2) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
                 contrib = I + self.background_color[None] * tm.exp(-A)
         else: # directly hit the background without entering the bounding box
