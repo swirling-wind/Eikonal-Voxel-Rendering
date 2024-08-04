@@ -319,6 +319,8 @@ class Renderer:
 
         hit_floor = 0
         floor_inv_pos = cam_pos
+
+        boundary = False
         
         contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
@@ -328,7 +330,13 @@ class Renderer:
             MAX_MARCHING_STEPS = 150
 
             I = tm.vec3(0.0)
+            Is = tm.vec3(0.0)
+            Ir = tm.vec3(0.0)
+
             A = 0.0 # absorption (e.g: A.rgb)
+            T = 1.0 # transmittance (e.g: T.rgb)
+            R = 0.0 # reflection (e.g: R.rgb)
+
             step_size = self.voxel_dx
             n = 1.0
 
@@ -347,7 +355,10 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term
-                Is = tm.vec3(voxelIrrad / 255.0 / 5.0) / tm.pow(1 - 0.5 * tm.dot(loc_dir, tm.normalize(d)), 1.5)
+                ANISOTROPY_FACTOR = 0.25
+                ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
+                ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
+                Is = tm.vec3(voxelIrrad / 255.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -358,13 +369,40 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Reflection Term
-                
+                oldT = T
 
+                if tm.length(gradient) > 0.1 and not boundary:
+                    FRESNEL_FACTOR = 0.5
+                    VOXELAUX_A = 0.9
+
+                    boundary = True
+
+                    R = 1 / tm.pow(1 + ti.abs(tm.dot(tm.normalize(gradient), tm.normalize(d))), 2.0)
+                    R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
+                    T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
+                    
+                    view_dir = tm.normalize(d)
+                    light_dir = tm.vec3(0.0, -1.0, 0.0)
+                    normal = tm.normalize(gradient)
+                    reflect_dir = tm.reflect(light_dir, normal)
+
+                    Ir = 0.8 * tm.pow(ti.abs(tm.dot(view_dir, reflect_dir)), 4.0)
+
+                    # dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
+                    # reflectionColor = tm.vec3(1.0, 0.0, 0.0) # self.background_color[None]
+                    # VOXEL_REFLECTION_DATA_RGB = tm.vec3(0.8)
+                    # VOXEL_REFLECTION_DATA_A = 1
+                    # # Ir = tm.vec3(0.0)
+                    # Ir = tm.mix(reflectionColor, VOXEL_REFLECTION_DATA_RGB * reflectionColor, VOXEL_REFLECTION_DATA_A)
+                else:
+                    R = 0.0
+                if tm.length(gradient) < 0.001:
+                    boundary = False
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is
-                I += Ic * tm.exp(-A)
+                Ic = scatterStrength * Is + Ir * R * 5
+                I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
                 # check if we are not outside of the volume

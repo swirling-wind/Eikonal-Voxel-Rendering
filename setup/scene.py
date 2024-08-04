@@ -173,8 +173,8 @@ class Scene:
            
             if not rendered:
                 self.renderer.ray_marching()
-                self.renderer.path_tracing()
-                self.renderer.current_spp += 2
+                # self.renderer.path_tracing()
+                self.renderer.current_spp += 1
 
 
             img = self.renderer.fetch_image()
