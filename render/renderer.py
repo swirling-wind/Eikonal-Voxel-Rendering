@@ -381,12 +381,11 @@ class Renderer:
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
                     
-                    view_dir = tm.normalize(d)
-                    light_dir = tm.vec3(0.0, -1.0, 0.0)
-                    normal = tm.normalize(gradient)
-                    reflect_dir = tm.reflect(light_dir, normal)
-
-                    Ir = 0.8 * tm.pow(ti.abs(tm.dot(view_dir, reflect_dir)), 4.0)
+                    view_dir = -tm.normalize(d)
+                    light_dir = tm.vec3(0.0, 1.0, 0.0)
+                    normal = -tm.normalize(gradient)
+                    reflect_dir = tm.reflect(-light_dir, normal)
+                    Ir = tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 4.0) * tm.vec3(1.0, 0.0, 0.0)
 
                     # dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
                     # reflectionColor = tm.vec3(1.0, 0.0, 0.0) # self.background_color[None]
