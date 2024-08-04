@@ -3,7 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, RandomSampler
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 import numpy as np
-from simulation.simulator import DEVICE
+from simulation.simulator import DEVICE, normalize_by_max
 import os
 
 class SineLayer(nn.Module):
@@ -210,3 +210,9 @@ class SirenFitter:
         # infer_output = (infer_output - infer_output.min()) / infer_output.max() * 255
         
         return infer_output.cpu().numpy()
+
+def siren_post_process(siren_res: np.ndarray, gamma = 0.6) -> np.ndarray:
+    normalized_siren_res = normalize_by_max(siren_res)
+    corrected_siren_res = ((normalized_siren_res / 255.0) ** (1.0 / gamma)) * 255.0
+    return corrected_siren_res
+

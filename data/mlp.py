@@ -112,7 +112,7 @@ class MLP:
                     print("Current learning rate:", prev_lr)
         torch.cuda.empty_cache()
 
-    def predict(self, pad: bool=False, batch_size: int = 2048) -> torch.Tensor:
+    def predict(self, pad: bool=False, batch_size: int = 2048) -> np.ndarray:
         NUM_X, NUM_Y, NUM_Z = self.num_xyz
         x = np.arange(NUM_X)
         z = np.arange(NUM_Z)
@@ -142,4 +142,4 @@ class MLP:
             padding = (0, 0, self.floor_height, 0, 0, 0) 
             predictions = torch.nn.functional.pad(predictions, padding, mode='constant', value=0)
         
-        return predictions
+        return predictions.cpu().numpy()
