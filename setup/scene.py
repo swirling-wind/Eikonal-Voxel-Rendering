@@ -147,7 +147,7 @@ class Scene:
     def set_background_color(self, color):
         self.renderer.background_color[None] = color
 
-    def display(self, ray_marching=False):
+    def display(self):
         print(HELP_MSG)
         self.window = ti.ui.Window("Path Tracing",
                                    SCREEN_RES,
@@ -160,7 +160,6 @@ class Scene:
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
 
-
         while self.window.running:
             should_reset_framebuffer = False            
             if self.camera.update_camera():
@@ -170,16 +169,11 @@ class Scene:
                 should_reset_framebuffer = True
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
-
-            # Could Use for _ in range(num_samples) to adjust samples per pixel (spp) 
-  
-            if ray_marching:                    
-                self.renderer.ray_marching()
-                self.renderer.current_spp += 1
-                # rendered = True
-            else:
-                self.renderer.path_tracing()
-                self.renderer.current_spp += 1
+           
+            self.renderer.ray_marching()
+            # self.renderer.path_tracing()
+            
+            self.renderer.current_spp += 1
 
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot

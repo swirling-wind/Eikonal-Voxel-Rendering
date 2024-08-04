@@ -347,7 +347,7 @@ class Renderer:
                 if (not self.pos_inside_particle_grid(pos)): # or (not self.inside_grid(voxel_index)):
                     break
 
-                if pos[1] < self.floor_height[None]:
+                if pos[1] <= self.floor_height[None]:
                     hit_floor = 1
                     floor_voxel_index = voxel_index
                     break
