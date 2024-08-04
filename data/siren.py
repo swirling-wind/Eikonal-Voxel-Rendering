@@ -140,7 +140,7 @@ class SirenFitter:
                            outermost_linear=True,
                            first_omega_0=omega, hidden_omega_0=omega)
     
-    def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 5, show_epoch_interval: int = 5):
+    def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 3, show_epoch_interval: int = 5):
         model_path = os.path.join(os.getcwd(), "data", "saves", f"SIREN(Irrad)({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega} omega).pt")
         if load_file == False or (not os.path.exists(model_path)):     
             if not os.path.exists(model_path):
