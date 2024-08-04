@@ -8,7 +8,7 @@ from scipy import ndimage
 ti.init(arch=ti.gpu)
 
 scene, floor_height = setup_voxel_scene()
-print("Scene setup done. Starting simulation...")
+
 sampler_multiplier = 7
 to_load_save = True
 plotter = Plotter(sampler_multiplier, floor_height)

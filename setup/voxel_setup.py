@@ -1,11 +1,9 @@
 from .scene import Scene
+from common.mesh_loader import load_and_voxelize_mesh
+
 import taichi as ti
 import taichi.math as tm
-
 import numpy as np
-from scipy import ndimage
-import trimesh
-import open3d as o3d
 
 NUM_XYZ = (128, 128, 128)
 GLASS_IOR = 1.5
@@ -13,33 +11,6 @@ LARGE_R, MEDIUM_R = 20, 15
 RED, BLUE, GREY = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), 
 WHITE, AZURE = tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
 
-def load_and_voxelize_mesh(file_path: str, num_xyz: tuple[int, int, int], 
-                           voxel_size=0.005, need_rotate=False) -> np.ndarray:
-    target_mesh = trimesh.load(file_path)
-    assert isinstance(target_mesh, trimesh.Trimesh), "Loaded object should be a Trimesh"
-    vertices, faces = target_mesh.vertices, target_mesh.faces
-
-    mesh = o3d.geometry.TriangleMesh()
-    mesh.vertices = o3d.utility.Vector3dVector(vertices)
-    mesh.triangles = o3d.utility.Vector3iVector(faces)
-    mesh.compute_vertex_normals()
-    voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(mesh, voxel_size)
-
-    filled_voxels = np.zeros(num_xyz, dtype=np.uint8)
-    for voxel in voxel_grid.get_voxels():
-        voxel_coord = voxel.grid_index
-        filled_voxels[voxel_coord[0], voxel_coord[1], voxel_coord[2]] = True
-    for y in range(filled_voxels.shape[1]):
-        slice_y = filled_voxels[:, y, :]
-        filled_slice = ndimage.binary_fill_holes(slice_y)
-        filled_voxels[:, y, :] = filled_slice
-
-    if need_rotate:
-        filled_voxels = np.transpose(filled_voxels, (0, 2, 1))  # Transpose from (x, y, z) to (x, z, y)
-        filled_voxels = np.flip(filled_voxels, axis=2)  # Flip y-axis to make the object stand up
-    print("Loaded Voxel shape:", filled_voxels.shape, " from:", file_path)  
-    print("Number of filled voxels:", np.sum(filled_voxels))
-    return filled_voxels
 
 def setup_fields(bunny_voxels: np.ndarray, glass_voxels: np.ndarray, num_xyz: tuple[int, int, int]) -> tuple:
     bunny_field = ti.field(dtype=ti.u8, shape=num_xyz)
@@ -66,7 +37,7 @@ def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8,
         xyz = tm.ivec3(i, j, k)
         if xyz.dot(xyz) < r**2: 
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.01, scatter_strength=0.5,
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.02, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
 
 @ti.func
@@ -84,7 +55,7 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
     for i, j, k in ti.ndrange(num_x, num_y, num_z):
         if bunny_field[i, j, k] == 1:
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.01, scatter_strength=0.5,
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.02, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
 
 @ti.kernel
