@@ -133,3 +133,6 @@ class Octree:
                         z + (i & 1) * half_size,
                         half_size
                     )
+
+def octree_post_process(octree_filled_grid: np.ndarray) -> np.ndarray:
+    return octree_filled_grid

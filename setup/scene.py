@@ -7,6 +7,7 @@ import taichi.math as tm
 from taichi.types import vector, matrix
 from render.ray_march import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
+import torch
 
 VOXEL_DX = 1 / 64
 SCREEN_RES = (800, 600)
@@ -24,7 +25,7 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.0, 0.0, 4.0))
+        self._camera_pos = np.array((0.0, 1.0, 5.0))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -148,6 +149,7 @@ class Scene:
         self.renderer.background_color[None] = color
 
     def display(self):
+        torch.cuda.empty_cache()
         print(HELP_MSG)
         self.window = ti.ui.Window("Ray marching",
                                    SCREEN_RES,

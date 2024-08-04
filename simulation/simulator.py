@@ -57,7 +57,7 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
                                    num_steps: int = 100, step_size: float = 1.0, num_show_images: int = 3) -> tuple[np.ndarray, np.ndarray]:
     
     stride = max(num_steps // (num_show_images-1), 1)
-    plot_step_indices =  [i for i in range(stride, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
+    plot_step_indices =  [i for i in range(0, num_steps+1, stride)] + [num_steps - 1] if num_show_images > 0 else []
 
     # Initialize the wavefront position and direction (initial_wavefront_pos.shape[0] = 30000 or highter) and the mask to keep track of the wavefront positions within the IOR boundaries
     cur_pos = torch.tensor(initial_wavefront_pos, device=DEVICE)

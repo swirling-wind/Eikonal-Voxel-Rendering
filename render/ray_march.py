@@ -208,8 +208,8 @@ class Renderer:
                 A += step_size * voxelAtt * self.voxel_inv_dx
 
                 # --------------------------------------
-                # Compute scattering term
-                ANISOTROPY_FACTOR = 0.1
+                # Compute scattering term 
+                ANISOTROPY_FACTOR = 0.25 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
                 Is = tm.vec3(voxelIrrad / 255.0 / 2.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
@@ -226,7 +226,7 @@ class Renderer:
                 oldT = T
 
                 if tm.length(gradient) > 0.1 and not boundary:
-                    FRESNEL_FACTOR = 0.5
+                    FRESNEL_FACTOR = 0.7
                     VOXELAUX_A = 0.9
 
                     boundary = True
@@ -239,7 +239,7 @@ class Renderer:
                     light_dir = self.light_direction[None]
                     normal = -tm.normalize(gradient)
                     reflect_dir = tm.reflect(-light_dir, normal)
-                    Ir = tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 4.0) # * tm.vec3(1.0, 0.0, 0.0)
+                    Ir = tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0) # * tm.vec3(1.0, 0.0, 0.0)
                 else:
                     R = 0.0
                 if tm.length(gradient) < 0.001:
