@@ -382,7 +382,7 @@ class Renderer:
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
                     
                     view_dir = -tm.normalize(d)
-                    light_dir = tm.vec3(0.0, 1.0, 0.0)
+                    light_dir = self.light_direction[None]
                     normal = -tm.normalize(gradient)
                     reflect_dir = tm.reflect(-light_dir, normal)
                     Ir = tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 4.0) * tm.vec3(1.0, 0.0, 0.0)

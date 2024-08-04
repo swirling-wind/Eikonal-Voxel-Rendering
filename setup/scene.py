@@ -5,7 +5,7 @@ import numpy as np
 import taichi as ti
 import taichi.math as tm
 from taichi.types import vector, matrix
-from render.renderer import Renderer
+from render.ray_march import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
 
 VOXEL_DX = 1 / 64
@@ -24,7 +24,7 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.0, 0.0, 3.0))
+        self._camera_pos = np.array((0.0, 0.0, 4.0))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -171,11 +171,9 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
            
-            if not rendered:
-                self.renderer.ray_marching()
-                # self.renderer.path_tracing()
-                self.renderer.current_spp += 1
-
+            # if not rendered:
+            self.renderer.ray_marching()
+            self.renderer.current_spp += 1
 
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot

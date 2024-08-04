@@ -66,7 +66,7 @@ def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8,
         xyz = tm.ivec3(i, j, k)
         if xyz.dot(xyz) < r**2: 
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.02, scatter_strength=0.5,
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.01, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
 
 @ti.func
@@ -84,13 +84,13 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
     for i, j, k in ti.ndrange(num_x, num_y, num_z):
         if bunny_field[i, j, k] == 1:
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.02, scatter_strength=0.5,
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.01, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
 
 @ti.kernel
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
     add_ball(LARGE_R, tm.vec3(-32, origin_y(LARGE_R, LARGE_R), 0), 1, RED, GLASS_IOR)
-    add_ball(MEDIUM_R, tm.vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), 1, BLUE, GLASS_IOR)
+    # add_ball(MEDIUM_R, tm.vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), 1, BLUE, GLASS_IOR)
     add_glass(glass_field, tm.vec3(-24, floor_ratio * 64, -128), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
     add_bunny(bunny_field, tm.vec3(3, floor_ratio * 64, 0), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     

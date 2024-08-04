@@ -138,6 +138,7 @@ def get_irrad_loc_dir(scene: Scene, sampler_multiplier: int, plotter: Plotter, g
     if to_load_save and irrad_loc_dir_save_exists(sampler_multiplier):
         raw_irradiance, local_diretion = load_irrad_loc_dir(sampler_multiplier)    
     else:
+        print("Running simulation")
         step_size = 0.3 * (NUM_XYZ[1] / 100)
         num_steps = int(1.0 * (NUM_XYZ[1]  / step_size))
 

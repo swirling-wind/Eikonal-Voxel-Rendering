@@ -7,6 +7,30 @@ eps = 1e-4
 inf = 1e10
 
 @ti.func
+def trilinear_interp(tex3d, coord: tm.vec3):
+    x, y, z = coord
+    x0= ti.floor(x, ti.i32)
+    y0= ti.floor(y, ti.i32)
+    z0= ti.floor(z, ti.i32)
+    x1, y1, z1 = x0 + 1, y0 + 1, z0 + 1
+    fx, fy, fz = x - x0, y - y0, z - z0
+    c000 = tex3d[x0, y0, z0]
+    c100 = tex3d[x1, y0, z0]
+    c010 = tex3d[x0, y1, z0]
+    c110 = tex3d[x1, y1, z0]
+    c001 = tex3d[x0, y0, z1]
+    c101 = tex3d[x1, y0, z1]
+    c011 = tex3d[x0, y1, z1]
+    c111 = tex3d[x1, y1, z1]
+    cx00 = tm.mix(c000, c100, fx)
+    cx10 = tm.mix(c010, c110, fx)
+    cx01 = tm.mix(c001, c101, fx)
+    cx11 = tm.mix(c011, c111, fx)
+    cxy0 = tm.mix(cx00, cx10, fy)
+    cxy1 = tm.mix(cx01, cx11, fy)
+    return tm.mix(cxy0, cxy1, fz)
+
+@ti.func
 def out_dir(n: tm.vec3):
     u = ti.Vector([1.0, 0.0, 0.0])
     if ti.abs(n[1]) < 1 - 1e-3:
