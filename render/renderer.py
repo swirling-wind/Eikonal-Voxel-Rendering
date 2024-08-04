@@ -335,6 +335,8 @@ class Renderer:
             for _cur_step in range(MAX_MARCHING_STEPS):
                 inv_pos = pos * self.voxel_inv_dx
                 gradient = self.trilinear_interp(self.grad, inv_pos)
+                loc_dir = self.trilinear_interp(self.loc_dir, inv_pos)
+                
                 voxelIrrad = self.trilinear_interp(self.irrad, inv_pos)
                 voxelAtt = self.trilinear_interp(self.atten, inv_pos)
                 scatterStrength = self.trilinear_interp(self.scatter_strength, inv_pos)
@@ -345,14 +347,19 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term
-                Is = tm.vec3(voxelIrrad / 255.0 / 3.0)
+                Is = tm.vec3(voxelIrrad / 255.0 / 5.0) / tm.pow(1 - 0.5 * tm.dot(loc_dir, tm.normalize(d)), 1.5)
 
                 # --------------------------------------
-                # Marching
+                # Compute new direction and refraction index
                 oldPos = pos
                 d += step_size * gradient
                 pos += step_size * d / n
                 n += tm.dot(gradient, pos - oldPos) * self.voxel_inv_dx
+
+                # --------------------------------------
+                # Compute Reflection Term
+                
+
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral

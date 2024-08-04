@@ -173,10 +173,9 @@ class Scene:
            
             if not rendered:
                 self.renderer.ray_marching()
-                # self.renderer.path_tracing()
-                self.renderer.current_spp += 1
+                self.renderer.path_tracing()
+                self.renderer.current_spp += 2
 
-                # rendered = True
 
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot
