@@ -149,7 +149,7 @@ class Scene:
 
     def display(self):
         print(HELP_MSG)
-        self.window = ti.ui.Window("Path Tracing",
+        self.window = ti.ui.Window("Ray marching",
                                    SCREEN_RES,
                                    vsync=True)
         self.camera = Camera(self.window, up=UP_DIR)

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 
-PLOT_STRIDE_LENGTH = 709 # 293 # 
+PLOT_STRIDE_LENGTH = 709  # 439# 293 # 
 FIG_SIZE = (5, 5)
 
 def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -28,7 +28,7 @@ class Plotter:
         ax.set_zlabel('Z Axis')
         grad_magnitude = np.linalg.norm(grad_xyz, axis=-1)
         indices = np.where(grad_magnitude > threshold)
-        ax.scatter(indices[0], indices[1], indices[2], c='red', alpha=alpha)
+        ax.scatter(indices[0], indices[1], indices[2], c='green', alpha=alpha)
         ax.set_title('3D Visualization of Gradients')
         ax.view_init(elev=90, azim=-90)
         ax.plot_surface(*floor_surface(grad_xyz.shape[0], grad_xyz.shape[1], self.floor_height), color='red', alpha=0.5)
@@ -36,7 +36,8 @@ class Plotter:
         plt.show()
 
     
-    def plot_wavefront(self, ior_field: np.ndarray, pos: np.ndarray|None, dir: np.ndarray|None, title: str = "IOR and wavefront", num_shown_points: int = 500):
+    def plot_wavefront(self, ior_field: np.ndarray, pos: np.ndarray|None, dir: np.ndarray|None, 
+                       title: str = "IOR and wavefront", num_shown_points: int = 1000):
         fig = plt.figure(figsize=FIG_SIZE)
         ax = fig.add_subplot(111, projection='3d')
         ax.set_box_aspect([1,1,1])

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from simulation.simulator import DEVICE
+from simulation.simulate_utils import normalize_by_max
 import os
 
 class IrradianceNet(nn.Module):
@@ -143,3 +144,11 @@ class MLP:
             predictions = torch.nn.functional.pad(predictions, padding, mode='constant', value=0)
         
         return predictions.cpu().numpy()
+
+def mlp_post_process(mlp_res: np.ndarray, gamma: float | None) -> np.ndarray:
+    normalized_mlp_res = normalize_by_max(mlp_res)
+    if gamma is not None:
+        corrected_mlp_res = ((normalized_mlp_res / 255.0) ** (1.0 / gamma)) * 255.0
+        return corrected_mlp_res
+    
+    return normalized_mlp_res

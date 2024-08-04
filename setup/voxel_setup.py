@@ -7,7 +7,8 @@ import numpy as np
 
 NUM_XYZ = (128, 128, 128)
 GLASS_IOR = 1.5
-LARGE_R, MEDIUM_R = 20, 15
+LARGE_R, MEDIUM_R = 22, 15
+
 RED, BLUE, GREY = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), 
 WHITE, AZURE = tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
 
@@ -60,10 +61,10 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
 
 @ti.kernel
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
-    add_ball(LARGE_R, tm.vec3(-32, origin_y(LARGE_R, LARGE_R), 0), 1, RED, GLASS_IOR)
+    add_ball(LARGE_R, tm.vec3(-36, floor_ratio * 64 / 2, 20), 1, RED, GLASS_IOR)
     # add_ball(MEDIUM_R, tm.vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), 1, BLUE, GLASS_IOR)
-    add_glass(glass_field, tm.vec3(-24, floor_ratio * 64, -128), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
-    add_bunny(bunny_field, tm.vec3(3, floor_ratio * 64, 0), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
+    add_glass(glass_field, tm.vec3(-24, floor_ratio * 64, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
+    add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
     # for debugging
     # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
@@ -72,12 +73,12 @@ def setup_voxel_scene() -> tuple[Scene, int]:
     global scene, bunny_field, glass_field
 
     num_x, num_y, num_z = NUM_XYZ
-    bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res4.ply", NUM_XYZ, 0.004)
-    glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.07, need_rotate=True)
+    bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res3.ply", NUM_XYZ, 0.0025)
+    glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
     bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, NUM_XYZ)
 
     
-    floor_ratio_val = floor_ratio(LARGE_R)
+    floor_ratio_val = -0.9
     print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height(num_y, floor_ratio_val))
     
 

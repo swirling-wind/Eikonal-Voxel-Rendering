@@ -181,7 +181,7 @@ class Renderer:
         if inter:            
             pos = near_pos # Ray start from intersection point inside the bounding box
   
-            MAX_MARCHING_STEPS = 150
+            MAX_MARCHING_STEPS = 200
 
             I = tm.vec3(0.0)
             Is = tm.vec3(0.0)

@@ -5,6 +5,9 @@ import open3d as o3d
 
 def load_and_voxelize_mesh(file_path: str, num_xyz: tuple[int, int, int], 
                            voxel_size=0.005, need_rotate=False) -> np.ndarray:
+    """
+    Smaller the voxel_size, higher the resolution of the voxel grid.
+    """
     target_mesh = trimesh.load(file_path)
     assert isinstance(target_mesh, trimesh.Trimesh), "Loaded object should be a Trimesh"
     vertices, faces = target_mesh.vertices, target_mesh.faces
