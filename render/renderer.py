@@ -213,7 +213,7 @@ class Renderer:
         return hit_distance, normal, c, hit_light, voxel_index
 
     @ti.func
-    def ipos_inside_particle_grid(self, ipos: ti.i32) -> bool:
+    def ipos_inside_particle_grid(self, ipos: tm.vec3) -> bool:
         # Check if the voxel is inside the bounding box
         pos = ipos * self.voxel_dx
         return self.bbox[0][0] <= pos[0] and pos[0] < self.bbox[1][
@@ -221,7 +221,7 @@ class Renderer:
                 1] and self.bbox[0][2] <= pos[2] and pos[2] < self.bbox[1][2]
     
     @ti.func
-    def pos_inside_particle_grid(self, pos: ti.f32) -> bool:
+    def pos_inside_particle_grid(self, pos: tm.vec3) -> bool:
         # Check if the voxel is inside the bounding box
         return self.bbox[0][0] <= pos[0] and pos[0] < self.bbox[1][
             0] and self.bbox[0][1] <= pos[1] and pos[1] < self.bbox[1][
@@ -282,11 +282,30 @@ class Renderer:
     def ray_marching(self):        
         for u, v in self.color_buffer:
             self.marching(u, v)
-        # ti.loop_config(parallelize=True)
-        # for u in range(self.color_buffer.shape[0]):
-        #     for v in range(self.color_buffer.shape[1]):
-        #     self.marching(u, v)
-                
+
+    @ti.func
+    def trilinear_interp(self, tex3d, coord: tm.vec3):
+        x, y, z = coord
+        x0= ti.floor(x, ti.i32)
+        y0= ti.floor(y, ti.i32)
+        z0= ti.floor(z, ti.i32)
+        x1, y1, z1 = x0 + 1, y0 + 1, z0 + 1
+        fx, fy, fz = x - x0, y - y0, z - z0
+        c000 = tex3d[x0, y0, z0]
+        c100 = tex3d[x1, y0, z0]
+        c010 = tex3d[x0, y1, z0]
+        c110 = tex3d[x1, y1, z0]
+        c001 = tex3d[x0, y0, z1]
+        c101 = tex3d[x1, y0, z1]
+        c011 = tex3d[x0, y1, z1]
+        c111 = tex3d[x1, y1, z1]
+        cx00 = tm.mix(c000, c100, fx)
+        cx10 = tm.mix(c010, c110, fx)
+        cx01 = tm.mix(c001, c101, fx)
+        cx11 = tm.mix(c011, c111, fx)
+        cxy0 = tm.mix(cx00, cx10, fy)
+        cxy1 = tm.mix(cx01, cx11, fy)
+        return tm.mix(cxy0, cxy1, fz)
 
     @ti.func
     def marching(self, u: ti.i32, v: ti.i32):
@@ -297,10 +316,9 @@ class Renderer:
         bbox_min = self.bbox[0]
         bbox_max = self.bbox[1]
         inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, cam_pos, d)
-        hit_background = 0
 
         hit_floor = 0
-        floor_voxel_index = self._to_voxel_index(near_pos)
+        floor_inv_pos = cam_pos
         
         contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
@@ -315,12 +333,11 @@ class Renderer:
             n = 1.0
 
             for _cur_step in range(MAX_MARCHING_STEPS):
-                voxel_index = self._to_voxel_index(pos)
-                gradient = self.grad[voxel_index]
-                voxelIrrad = self.irrad[voxel_index]
-
-                voxelAtt = self.atten[voxel_index]
-                scatterStrength = self.scatter_strength[voxel_index]
+                inv_pos = pos * self.voxel_inv_dx
+                gradient = self.trilinear_interp(self.grad, inv_pos)
+                voxelIrrad = self.trilinear_interp(self.irrad, inv_pos)
+                voxelAtt = self.trilinear_interp(self.atten, inv_pos)
+                scatterStrength = self.trilinear_interp(self.scatter_strength, inv_pos)
 
                 # --------------------------------------
                 # Compute Attenuation factor
@@ -328,10 +345,10 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term
-                Is = tm.vec3(voxelIrrad / 255.0 / 2.0)
+                Is = tm.vec3(voxelIrrad / 255.0 / 3.0)
 
                 # --------------------------------------
-                # check if we are not outside of the volume
+                # Marching
                 oldPos = pos
                 d += step_size * gradient
                 pos += step_size * d / n
@@ -349,13 +366,16 @@ class Renderer:
 
                 if pos[1] <= self.floor_height[None]:
                     hit_floor = 1
-                    floor_voxel_index = voxel_index
+                    floor_inv_pos = inv_pos
                     break
 
             if hit_floor: # hit the floor (add floor color and floor position's irradiance)
-                contrib = I + (self.floor_color[None] + self.irrad[floor_voxel_index] / 255.0 * 1.2) * tm.exp(-A)
+                floor_irrad = self.trilinear_interp(self.irrad, floor_inv_pos)
+                floor_irrad_vec = tm.vec3(floor_irrad / 255.0)
+                contrib = I + (self.floor_color[None] + floor_irrad_vec * 1.2) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
                 contrib = I + self.background_color[None] * tm.exp(-A)
+
         else: # directly hit the background without entering the bounding box
             contrib = self.background_color[None]
         

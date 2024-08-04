@@ -6,7 +6,6 @@ import taichi.math as tm
 eps = 1e-4
 inf = 1e10
 
-
 @ti.func
 def out_dir(n: tm.vec3):
     u = ti.Vector([1.0, 0.0, 0.0])

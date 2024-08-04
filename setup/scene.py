@@ -159,6 +159,7 @@ class Scene:
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
+        rendered = False
 
         while self.window.running:
             should_reset_framebuffer = False            
@@ -170,10 +171,12 @@ class Scene:
             if should_reset_framebuffer:
                 self.renderer.reset_framebuffer()
            
-            self.renderer.ray_marching()
-            # self.renderer.path_tracing()
-            
-            self.renderer.current_spp += 1
+            if not rendered:
+                self.renderer.ray_marching()
+                # self.renderer.path_tracing()
+                self.renderer.current_spp += 1
+
+                # rendered = True
 
             img = self.renderer.fetch_image()
             # if self.window.is_pressed('p'):   # Save screenshot
