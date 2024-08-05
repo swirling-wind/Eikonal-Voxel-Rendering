@@ -152,7 +152,7 @@ class Scene:
         torch.cuda.empty_cache()
         print(HELP_MSG)
         self.window = ti.ui.Window("Ray marching",
-                                   SCREEN_RES,
+                                   (1200, 900),
                                    vsync=True)
         self.camera = Camera(self.window, up=UP_DIR)
         self.renderer.set_camera_pos(*self.camera.position)
