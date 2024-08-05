@@ -151,7 +151,7 @@ def get_irrad_loc_dir(scene: Scene, sampler_multiplier: int, plotter: Plotter, g
             save_irrad_loc_dir(raw_irradiance, local_diretion, sampler_multiplier)
 
     raw_irradiance = remove_under_floor(raw_irradiance, floor_height=plotter.floor_height)
-    filtered_irradiance = ndimage.gaussian_filter(raw_irradiance, sigma=gaussian_sigma)
-    final_irradiance = normalize_by_max(filtered_irradiance)
+    raw_irradiance = ndimage.gaussian_filter(raw_irradiance, sigma=gaussian_sigma)
+    final_irradiance = normalize_by_max(raw_irradiance)
     return final_irradiance, local_diretion
  

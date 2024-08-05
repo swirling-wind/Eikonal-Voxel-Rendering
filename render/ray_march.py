@@ -225,7 +225,7 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.06 and not boundary:
+                if tm.length(gradient) > 0.1 and not boundary:
                     FRESNEL_FACTOR = 0.7
                     VOXELAUX_A = 0.9
 
@@ -235,14 +235,23 @@ class Renderer:
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
                     
+                    # Phong reflection model
                     view_dir = -tm.normalize(d)
                     light_dir = self.light_direction[None]
                     normal = -tm.normalize(gradient)
                     reflect_dir = tm.reflect(-light_dir, normal)
-                    Ir = tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0) # * tm.vec3(1.0, 0.0, 0.0)
+                    Ir += 3.0 * tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0) # * tm.vec3(1.0, 0.0, 0.0)'
+
+                    # Original reflection model
+                    dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
+                    reflectionColor = tm.vec3(0.5, 0.5, 0.7)
+                    VOXELREFLECTIONDATA_RGB = tm.vec3(0.15)
+                    VOXELREFLECTIONDATA_A = 0.9
+                    Ir += tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
+
                 else:
                     R = 0.0
-                if tm.length(gradient) < 0.001:
+                if tm.length(gradient) < 0.0025:
                     boundary = False
 
                 #  --------------------------------------
