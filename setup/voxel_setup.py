@@ -82,7 +82,7 @@ def setup_voxel_scene() -> tuple[Scene, int]:
     print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height(num_y, floor_ratio_val))
     
 
-    scene = Scene(exposure=1.2)
+    scene = Scene(exposure=1.0)
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
     scene.set_background_color((0.05, 0.05, 0.4))
     scene.set_floor(height=floor_ratio_val, color=tm.vec3(0.05, 0.1, 0.4))
