@@ -76,12 +76,10 @@ def setup_voxel_scene() -> tuple[Scene, int]:
     bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res3.ply", NUM_XYZ, 0.0025)
     glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
     bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, NUM_XYZ)
-
     
     floor_ratio_val = -0.9
     print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height(num_y, floor_ratio_val))
     
-
     scene = Scene(exposure=1.0)
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
     scene.set_background_color((0.05, 0.05, 0.4))

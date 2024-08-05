@@ -3,6 +3,8 @@ import taichi.math as tm
 from common.math_utils import *
 from taichi.types import vector, matrix
 
+from setup.ImageHDR import Image
+
 # MAX_RAY_DEPTH = 3
 use_directional_light = True
 
@@ -36,6 +38,10 @@ class Renderer:
         self.scatter_strength = ti.field(dtype=ti.f32)
         self.anisotropy_factor = ti.field(dtype=ti.f32)
         self.opaque = ti.field(dtype=ti.i8)
+
+        # HDR map
+        # self.hdr_map = Image('assets/Tokyo_BigSight_3k.hdr')
+        # self.hdr_map.process(exposure=1.8, gamma=self.exposure)
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
