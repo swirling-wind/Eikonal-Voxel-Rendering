@@ -97,7 +97,9 @@ class Renderer:
         self.atten.fill(0.0)
         self.scatter_strength.fill(0.0)
 
-        hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
+        # hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
+        hdr_image = ti.tools.imread('assets/Tokyo_BigSight_3k.hdr').astype('float32')
+
         self.hdr_img.from_numpy(hdr_image / 255)
         self.hdr_process(self.exposure, 2.2)
 
@@ -249,7 +251,7 @@ class Renderer:
                 ANISOTROPY_FACTOR = 0.25 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 3.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 4.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -263,7 +265,7 @@ class Renderer:
                 oldT = T
 
                 if tm.length(gradient) > 0.1 and not boundary:
-                    FRESNEL_FACTOR = 0.7
+                    FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.9
 
                     boundary = True
@@ -271,6 +273,7 @@ class Renderer:
                     R = 1 / tm.pow(1 + ti.abs(tm.dot(tm.normalize(gradient), tm.normalize(d))), 2.0)
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
+
                     
                     # Phong reflection model
                     view_dir = -tm.normalize(d)
@@ -284,7 +287,7 @@ class Renderer:
                     reflectionColor = self.sky_color(reflect_dir)
                     # VOXELREFLECTIONDATA_RGB = tm.vec3(1.0)
                     # VOXELREFLECTIONDATA_A = 0.9
-                    Ir += 0.5 * reflectionColor # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
+                    Ir += reflectionColor # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
 
                 else:
                     R = 0.0

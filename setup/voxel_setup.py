@@ -7,7 +7,7 @@ import numpy as np
 
 NUM_XYZ = (128, 128, 128)
 GLASS_IOR = 1.5
-LARGE_R, MEDIUM_R = 22, 15
+LARGE_R, CUBE_LEN = 23, 30
 
 RED, BLUE, GREY = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), 
 WHITE, AZURE = tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
@@ -40,6 +40,14 @@ def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8,
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
             scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.02, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
+            
+@ti.func
+def add_cube(side_len: int, left_bottom_corner: tm.vec3, mat: ti.i8, 
+             color: tm.vec3, voxel_ior: float):
+    for i, j, k in ti.ndrange(side_len, side_len, side_len):
+        scene.set_voxel(tm.vec3(i, j, k), left_bottom_corner, mat, color, ior=voxel_ior)
+        scene.set_voxel_data(tm.vec3(i, j, k), left_bottom_corner, atten=0.02, scatter_strength=0.5,
+                             anisotropy_factor=0.0, opaque=0)
 
 @ti.func
 def add_glass(glass_field, origin: tm.vec3, mat: ti.i8, 
@@ -62,9 +70,9 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
 @ti.kernel
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
     add_ball(LARGE_R, tm.vec3(-36, floor_ratio * 64 / 2, 20), 1, RED, GLASS_IOR)
-    # add_ball(MEDIUM_R, tm.vec3(-8, origin_y(LARGE_R, MEDIUM_R), 36), 1, BLUE, GLASS_IOR)
-    add_glass(glass_field, tm.vec3(-24, floor_ratio * 64, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
-    add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
+    add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 1, -52), 1, BLUE, GLASS_IOR)
+    add_glass(glass_field, tm.vec3(-24, floor_ratio * 64 + 1, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
+    add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64 + 1, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
     # for debugging
     # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
