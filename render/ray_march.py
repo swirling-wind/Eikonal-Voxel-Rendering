@@ -3,8 +3,6 @@ import taichi.math as tm
 from common.math_utils import *
 from taichi.types import vector, matrix
 
-from setup.ImageHDR import Image
-
 # MAX_RAY_DEPTH = 3
 use_directional_light = True
 
@@ -40,6 +38,8 @@ class Renderer:
         self.opaque = ti.field(dtype=ti.i8)
 
         # HDR map
+        self.hdr_img = ti.Vector.field(3, dtype=ti.f32)
+        self.hdr_img_size = (3200, 1600)
         # self.hdr_map = Image('assets/Tokyo_BigSight_3k.hdr')
         # self.hdr_map.process(exposure=1.8, gamma=self.exposure)
 
@@ -69,6 +69,7 @@ class Renderer:
         voxel_grid_offset = [-self.voxel_grid_res // 2 for _ in range(3)]
 
         ti.root.dense(ti.ij, image_res).place(self.color_buffer)
+        ti.root.dense(ti.ij, self.hdr_img_size).place(self.hdr_img)
         ti.root.dense(ti.ijk,
                       self.voxel_grid_res).place(self.voxel_color,
                                                 self.voxel_material,
@@ -95,6 +96,36 @@ class Renderer:
 
         self.atten.fill(0.0)
         self.scatter_strength.fill(0.0)
+
+        hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
+        self.hdr_img.from_numpy(hdr_image / 255)
+        self.hdr_process(self.exposure, 2.2)
+
+    @ti.kernel
+    def hdr_process(self, exposure: float, gamma: float):
+        for i, j in self.hdr_img:
+            color = self.hdr_img[i, j] * exposure
+            color = pow(color, tm.vec3(gamma))
+            self.hdr_img[i, j] = color
+    
+    @staticmethod
+    @ti.func
+    def sample_spherical_map(v: tm.vec3) -> tm.vec2:
+        uv  = tm.vec2(tm.atan2(v.z, v.x), tm.asin(v.y))
+        uv *= tm.vec2(0.5 / tm.pi, 1 / tm.pi)
+        uv += 0.5
+        return uv
+    
+    @ti.func
+    def hdr_texture(self, uv: tm.vec2) -> tm.vec3:
+        x = int(uv.x * self.hdr_img_size[0])
+        y = int(uv.y * self.hdr_img_size[1])
+        return self.hdr_img[x, y]
+
+    @ti.func
+    def sky_color(self, dir: tm.vec3) -> tm.vec3:
+        uv = self.sample_spherical_map(dir)
+        return self.hdr_texture(uv)
 
 
     def set_directional_light(self, direction: tuple, light_direction_noise: float,
@@ -218,7 +249,7 @@ class Renderer:
                 ANISOTROPY_FACTOR = 0.25 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 2.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 3.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -246,14 +277,14 @@ class Renderer:
                     light_dir = self.light_direction[None]
                     normal = -tm.normalize(gradient)
                     reflect_dir = tm.reflect(-light_dir, normal)
-                    Ir += 3.0 * tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0) # * tm.vec3(1.0, 0.0, 0.0)'
+                    Ir += 2.0 * tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0) # * tm.vec3(1.0, 0.0, 0.0)'
 
                     # Original reflection model
-                    dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
-                    reflectionColor = tm.vec3(0.5, 0.5, 0.7)
-                    VOXELREFLECTIONDATA_RGB = tm.vec3(0.15)
-                    VOXELREFLECTIONDATA_A = 0.9
-                    Ir += tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
+                    reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
+                    reflectionColor = self.sky_color(reflect_dir)
+                    # VOXELREFLECTIONDATA_RGB = tm.vec3(1.0)
+                    # VOXELREFLECTIONDATA_A = 0.9
+                    Ir += 0.5 * reflectionColor # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
 
                 else:
                     R = 0.0
@@ -280,10 +311,10 @@ class Renderer:
                 floor_irrad_vec = tm.vec3(floor_irrad / 255.0)
                 contrib = I + (self.floor_color[None] + floor_irrad_vec * 1.2) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
-                contrib = I + self.background_color[None] * tm.exp(-A)
+                contrib = I + self.sky_color(d) * tm.exp(-A)
 
         else: # directly hit the background without entering the bounding box
-            contrib = self.background_color[None]
+            contrib = self.sky_color(d) # self.background_color[None]
         
         self.color_buffer[u, v] += contrib
 

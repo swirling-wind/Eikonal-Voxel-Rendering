@@ -83,7 +83,7 @@ def setup_voxel_scene() -> tuple[Scene, int]:
     scene = Scene(exposure=1.0)
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
     scene.set_background_color((0.05, 0.05, 0.4))
-    scene.set_floor(height=floor_ratio_val, color=tm.vec3(0.05, 0.1, 0.4))
+    scene.set_floor(height=floor_ratio_val, color=tm.vec3(0.2, 0.2, 0.2))
 
     initialize_voxels(bunny_field, glass_field, floor_ratio_val, num_x, num_y, num_z)
     return scene, floor_height(num_y, floor_ratio_val)
