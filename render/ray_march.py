@@ -1,3 +1,4 @@
+# Ray marching in voxels
 import taichi as ti
 import taichi.math as tm
 from common.math_utils import *
@@ -248,10 +249,10 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term 
-                ANISOTROPY_FACTOR = 0.25 # Higher value means more anisotropic scattering
+                ANISOTROPY_FACTOR = 0.5 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 4.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 3.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -296,7 +297,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 2.0
+                Ic = scatterStrength * Is + Ir * R * 2.4
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
