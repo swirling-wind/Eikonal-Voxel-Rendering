@@ -2,12 +2,11 @@
 import taichi as ti
 import taichi.math as tm
 from common.math_utils import *
-from taichi.types import vector, matrix
 
 # MAX_RAY_DEPTH = 3
-use_directional_light = True
-
 # DIS_LIMIT = 100
+
+use_directional_light = True
 
 @ti.data_oriented
 class Renderer:
@@ -41,8 +40,6 @@ class Renderer:
         # HDR map
         self.hdr_img = ti.Vector.field(3, dtype=ti.f32)
         self.hdr_img_size = (3200, 1600)
-        # self.hdr_map = Image('assets/Tokyo_BigSight_3k.hdr')
-        # self.hdr_map.process(exposure=1.8, gamma=self.exposure)
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -88,7 +85,7 @@ class Renderer:
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
         self.set_up(*up)
-        self.set_fov(0.23)
+        self.set_fov(0.4) # 0.23
 
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
@@ -129,7 +126,6 @@ class Renderer:
     def sky_color(self, dir: tm.vec3) -> tm.vec3:
         uv = self.sample_spherical_map(dir)
         return self.hdr_texture(uv)
-
 
     def set_directional_light(self, direction: tuple, light_direction_noise: float,
                               light_color: tuple):
@@ -249,7 +245,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute scattering term 
-                ANISOTROPY_FACTOR = 0.5 # Higher value means more anisotropic scattering
+                ANISOTROPY_FACTOR = 0.7 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
                 Is = tm.vec3(voxelIrrad / 255.0 / 3.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
@@ -297,7 +293,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 2.4
+                Ic = scatterStrength * Is + Ir * R * 2.8
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
@@ -392,7 +388,7 @@ class Renderer:
 
     @staticmethod
     @ti.func
-    def round_idx(idx_: vector(3, ti.f32)) -> vector(3, ti.i32):
+    def round_idx(idx_: tm.vec3) -> tm.vec3:
         idx = ti.cast(idx_, ti.f32)
         return ti.Vector(
             [ti.round(idx[0]), # type: ignore
