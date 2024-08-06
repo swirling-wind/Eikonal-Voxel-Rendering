@@ -4,10 +4,12 @@ from datetime import datetime
 import numpy as np
 import taichi as ti
 import taichi.math as tm
-from taichi.types import vector, matrix
+import torch
+from scipy.ndimage import gaussian_filter
+
 from render.ray_march import Renderer
 from common.math_utils import np_normalize, np_rotate_matrix
-import torch
+
 
 VOXEL_DX = 1 / 64
 SCREEN_RES = (800, 600)
@@ -119,7 +121,7 @@ class Scene:
         
     @staticmethod
     @ti.func
-    def round_idx(idx_: vector(3, ti.f32)) -> vector(3, ti.i32):
+    def round_idx(idx_: tm.vec3) -> tm.vec3:
         idx = ti.cast(idx_, ti.f32)
         return ti.Vector(
             [ti.round(idx[0]), # type: ignore
@@ -263,6 +265,31 @@ class Scene:
     @opaque.setter
     def opaque(self, opaque_field: ti.types.ndarray()):
         self.renderer.opaque.from_numpy(opaque_field)
+
+
+    #### Truncate outside the surface of objects ####
+    def truncate_outside_surface(self, gradient_threshold: float = 0.05):
+        outside_mask = np.linalg.norm(self.gradient, axis=-1) < gradient_threshold
+        temp_ior = self.ior.copy()
+        temp_ior[outside_mask] = 1.0
+        self.ior = temp_ior
+
+        temp_atten = self.attenuation.copy()
+        temp_atten[outside_mask] = 0.0
+        self.attenuation = temp_atten
+
+        temp_scatter = self.scatter_strength.copy()
+        temp_scatter[outside_mask] = 0.0
+        self.scatter_strength = temp_scatter
+
+        temp_grad = self.gradient.copy()
+        temp_grad[outside_mask, :] = 0
+        self.gradient = temp_grad
+
+    def apply_filter(self, sigma: float = 2.0, radius: int = 2):
+        self.ior = gaussian_filter(self.ior, sigma=sigma, radius=radius)
+        self.attenuation = gaussian_filter(self.attenuation, sigma=sigma, radius=radius)
+        self.scatter_strength = gaussian_filter(self.scatter_strength, sigma=sigma, radius=radius)
 
 
 

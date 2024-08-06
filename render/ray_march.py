@@ -234,7 +234,7 @@ class Renderer:
             n = 1.0
 
             for _cur_step in range(MAX_MARCHING_STEPS):
-                inv_pos = pos * self.voxel_inv_dx
+                inv_pos = pos * self.voxel_inv_dx # voxel_inv_dx is 1 / dx, equal to 64
                 gradient = trilinear_interp(self.grad, inv_pos)
                 loc_dir = trilinear_interp(self.loc_dir, inv_pos)
                 
@@ -280,7 +280,7 @@ class Renderer:
                     light_dir = self.light_direction[None]
                     normal = -tm.normalize(gradient)
                     reflect_dir = tm.reflect(-light_dir, normal)
-                    Ir += 2.0 * tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
+                    Ir += tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
 
                     # Original reflection model
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
@@ -296,7 +296,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 2.8
+                Ic = scatterStrength * Is + Ir * R * 2.5
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
@@ -312,7 +312,7 @@ class Renderer:
             if hit_floor: # hit the floor (add floor color and floor position's irradiance)
                 floor_irrad = trilinear_interp(self.irrad, floor_inv_pos)
                 floor_irrad_vec = tm.vec3(floor_irrad / 255.0)
-                contrib = I + (self.floor_color[None] + floor_irrad_vec * 1.2) * tm.exp(-A)
+                contrib = I + (self.floor_color[None] + floor_irrad_vec * 1.5) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
                 contrib = I + self.sky_color(d) * tm.exp(-A)
 
