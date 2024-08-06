@@ -236,10 +236,6 @@ class Renderer:
             for _cur_step in range(MAX_MARCHING_STEPS):
                 inv_pos = pos * self.voxel_inv_dx
                 gradient = trilinear_interp(self.grad, inv_pos)
-                if tm.length(gradient) < 0.001: # if the gradient is too small, ignore it
-                    gradient = tm.vec3(0.0)
-
-
                 loc_dir = trilinear_interp(self.loc_dir, inv_pos)
                 
                 voxelIrrad = trilinear_interp(self.irrad, inv_pos)
@@ -255,7 +251,7 @@ class Renderer:
                 ANISOTROPY_FACTOR = 0.25 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 4.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 5.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -284,13 +280,13 @@ class Renderer:
                     light_dir = self.light_direction[None]
                     normal = -tm.normalize(gradient)
                     reflect_dir = tm.reflect(-light_dir, normal)
-                    Ir += 2.0 * tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0) # * tm.vec3(1.0, 0.0, 0.0)'
+                    Ir += 2.0 * tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
 
                     # Original reflection model
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
                     reflectionColor = self.sky_color(reflect_dir)
                     # VOXELREFLECTIONDATA_RGB = tm.vec3(1.0)
-                    # VOXELREFLECTIONDATA_A = 0.9
+                    # VOXELREFLECTIONDATA_A = 0.8
                     Ir += reflectionColor # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
 
                 else:
@@ -300,7 +296,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 5
+                Ic = scatterStrength * Is + Ir * R * 2.8
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
