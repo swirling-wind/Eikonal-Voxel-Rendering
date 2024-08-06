@@ -140,7 +140,7 @@ def get_irrad_loc_dir(scene: Scene, sampler_multiplier: int, plotter: Plotter, g
     else:
         print("Running simulation")
         step_size = 0.3 * (NUM_XYZ[1] / 100)
-        num_steps = int(1.2 * (NUM_XYZ[1]  / step_size))
+        num_steps = int(1.3 * (NUM_XYZ[1]  / step_size))
 
         initial_wavefront_pos, initial_wavefront_dir = generate_initial_wavefront(sampler_multiplier, POS_PERTURBATION_SCALE, *NUM_XYZ)
 
@@ -151,7 +151,7 @@ def get_irrad_loc_dir(scene: Scene, sampler_multiplier: int, plotter: Plotter, g
             save_irrad_loc_dir(raw_irradiance, local_diretion, sampler_multiplier)
 
     raw_irradiance = remove_under_floor(raw_irradiance, floor_height=plotter.floor_height)
-    raw_irradiance = ndimage.gaussian_filter(raw_irradiance, sigma=gaussian_sigma)
+    raw_irradiance = ndimage.gaussian_filter(raw_irradiance, sigma=gaussian_sigma, radius=1)
     final_irradiance = normalize_by_max(raw_irradiance)
     return final_irradiance, local_diretion
  

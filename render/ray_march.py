@@ -236,6 +236,10 @@ class Renderer:
             for _cur_step in range(MAX_MARCHING_STEPS):
                 inv_pos = pos * self.voxel_inv_dx
                 gradient = trilinear_interp(self.grad, inv_pos)
+                if tm.length(gradient) < 0.001: # if the gradient is too small, ignore it
+                    gradient = tm.vec3(0.0)
+
+
                 loc_dir = trilinear_interp(self.loc_dir, inv_pos)
                 
                 voxelIrrad = trilinear_interp(self.irrad, inv_pos)
@@ -244,7 +248,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += step_size * voxelAtt * self.voxel_inv_dx
+                A += voxelAtt # * step_size * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term 
@@ -264,7 +268,7 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.04 and not boundary:
+                if tm.length(gradient) > 0.08 and not boundary:
                     FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.9
 
@@ -291,7 +295,7 @@ class Renderer:
 
                 else:
                     R = 0.0
-                if tm.length(gradient) < 0.0005:
+                if tm.length(gradient) < 0.0001:
                     boundary = False
 
                 #  --------------------------------------
@@ -346,6 +350,9 @@ class Renderer:
                 for d in ti.static(range(3)):
                     ti.atomic_min(self.bbox[0][d], (I[d] - 1) * self.voxel_dx)
                     ti.atomic_max(self.bbox[1][d], (I[d] + 2) * self.voxel_dx)
+        
+        # the bounding box is above the floor, lower it
+        self.bbox[0][1] = self.bbox[0][1] - 2 * self.voxel_dx
 
     def reset_framebuffer(self):
         self.current_spp = 0

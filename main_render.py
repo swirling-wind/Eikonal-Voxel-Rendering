@@ -10,8 +10,8 @@ ti.init(arch=ti.gpu)
 
 scene, floor_height = setup_voxel_scene()
 
-sampler_multiplier = 7
-to_load_save = True
+sampler_multiplier = 6
+to_load_save = False
 plotter = Plotter(sampler_multiplier, floor_height)
 
 GAUSSIAN_SIGMA = 2.0
