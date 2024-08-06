@@ -244,14 +244,14 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += voxelAtt # * step_size * self.voxel_inv_dx
+                A += voxelAtt * 2.0 # * step_size * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term 
                 ANISOTROPY_FACTOR = 0.25 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 5.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 4.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -264,9 +264,9 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.08 and not boundary:
+                if tm.length(gradient) > 0.07 and not boundary:
                     FRESNEL_FACTOR = 0.5
-                    VOXELAUX_A = 0.9
+                    VOXELAUX_A = 0.6
 
                     boundary = True
 
@@ -291,12 +291,12 @@ class Renderer:
 
                 else:
                     R = 0.0
-                if tm.length(gradient) < 0.0001:
+                if tm.length(gradient) < 0.001:
                     boundary = False
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 2.5
+                Ic = scatterStrength * Is + Ir * R * 2.0
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
@@ -312,7 +312,7 @@ class Renderer:
             if hit_floor: # hit the floor (add floor color and floor position's irradiance)
                 floor_irrad = trilinear_interp(self.irrad, floor_inv_pos)
                 floor_irrad_vec = tm.vec3(floor_irrad / 255.0)
-                contrib = I + (self.floor_color[None] + floor_irrad_vec * 1.5) * tm.exp(-A)
+                contrib = I + (self.floor_color[None] + floor_irrad_vec * 3.0) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
                 contrib = I + self.sky_color(d) * tm.exp(-A)
 

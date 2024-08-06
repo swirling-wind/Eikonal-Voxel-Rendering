@@ -27,7 +27,7 @@ MAT_LIGHT = 2
 class Camera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((3.0, 3.0, 5.0))
+        self._camera_pos = np.array((4.0, 4.0, 4.0))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -150,7 +150,26 @@ class Scene:
     def set_background_color(self, color):
         self.renderer.background_color[None] = color
 
-    def display(self):
+    def offline_render(self, camera_pos_list: list[np.ndarray]) -> list[np.ndarray]:
+        torch.cuda.empty_cache()
+        # self.camera = Camera(None, up=UP_DIR)
+        render_res_list = []
+        for cur_camera_pos in camera_pos_list:
+            self.renderer.set_camera_pos(cur_camera_pos[0], cur_camera_pos[1], cur_camera_pos[2])
+            self.renderer.set_look_at(0, 0, 0)
+            self.renderer.reset_framebuffer()
+            self.renderer.recompute_bbox()
+
+            for _cur_spp in range(5):
+                self.renderer.ray_marching()
+                self.renderer.current_spp += 1
+            
+            raw_img = self.renderer.fetch_image().to_numpy()
+            transposed_img = np.transpose(raw_img, (1, 0, 2))[::-1, :, :]
+            render_res_list.append(transposed_img)
+        return render_res_list
+
+    def rt_render(self):
         torch.cuda.empty_cache()
         print(HELP_MSG)
         self.window = ti.ui.Window("Ray marching",
@@ -163,7 +182,7 @@ class Scene:
         self.renderer.recompute_bbox()
         canvas = self.window.get_canvas()
         # print(self.camera.position, self.camera.look_at)
-        rendered = False
+        # rendered = False
 
         while self.window.running:
             should_reset_framebuffer = False            
@@ -209,7 +228,7 @@ class Scene:
         return self.renderer.grad.to_numpy()
         
     @gradient.setter
-    def gradient(self, grad_field: ti.types.ndarray()):
+    def gradient(self, grad_field: np.ndarray):
         self.renderer.grad.from_numpy(grad_field)    
     
     #### Irradiance ####

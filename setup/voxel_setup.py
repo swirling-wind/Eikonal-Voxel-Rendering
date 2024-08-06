@@ -1,4 +1,5 @@
 from .scene import Scene
+from .scene_utils import setup_fields, floor_height
 from common.mesh_loader import load_and_voxelize_mesh
 
 import taichi as ti
@@ -11,24 +12,6 @@ LARGE_R, CUBE_LEN = 23, 30
 
 RED, BLUE, GREY = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), 
 WHITE, AZURE = tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
-
-
-def setup_fields(bunny_voxels: np.ndarray, glass_voxels: np.ndarray, num_xyz: tuple[int, int, int]) -> tuple:
-    bunny_field = ti.field(dtype=ti.u8, shape=num_xyz)
-    bunny_field.from_numpy(bunny_voxels)
-    glass_field = ti.field(dtype=ti.u8, shape=num_xyz)
-    glass_field.from_numpy(glass_voxels)
-    return bunny_field, glass_field
-
-@ti.func
-def origin_y(largest: int, r: int):
-    return -(largest-r)-1
-
-def floor_ratio(largest: int) -> float:
-    return -1 / 64 * (largest)
-
-def floor_height(num_y: int, floor_ratio: float) -> int:
-    return int((1+floor_ratio) * num_y / 2)
 
 @ti.func
 def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8, 
@@ -74,8 +57,7 @@ def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), fl
     add_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
     add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64 + 2, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
-    # for debugging
-    # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)
+    # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR) # for debugging
 
 def setup_voxel_scene() -> tuple[Scene, int]:
     global scene, bunny_field, glass_field
