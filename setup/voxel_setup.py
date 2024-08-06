@@ -69,10 +69,10 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
 
 @ti.kernel
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
-    add_ball(LARGE_R, tm.vec3(-36, floor_ratio * 64 / 2, 20), 1, RED, GLASS_IOR)
-    add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 1, -52), 1, BLUE, GLASS_IOR)
-    add_glass(glass_field, tm.vec3(-24, floor_ratio * 64 + 1, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
-    add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64 + 1, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
+    add_ball(LARGE_R, tm.vec3(-34, floor_ratio * 64 / 2, 20), 1, RED, GLASS_IOR)
+    add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 2, -46), 1, BLUE, GLASS_IOR)
+    add_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 1, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
+    add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64 + 2, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
     # for debugging
     # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR)

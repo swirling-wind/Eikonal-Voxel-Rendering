@@ -120,8 +120,8 @@ class Renderer:
     
     @ti.func
     def hdr_texture(self, uv: tm.vec2) -> tm.vec3:
-        x = int(uv.x * self.hdr_img_size[0])
-        y = int(uv.y * self.hdr_img_size[1])
+        x = int(uv.x * (self.hdr_img_size[0] - 1))
+        y = int(uv.y * (self.hdr_img_size[1] - 1))
         return self.hdr_img[x, y]
 
     @ti.func
@@ -264,7 +264,7 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.1 and not boundary:
+                if tm.length(gradient) > 0.04 and not boundary:
                     FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.9
 
@@ -291,7 +291,7 @@ class Renderer:
 
                 else:
                     R = 0.0
-                if tm.length(gradient) < 0.0025:
+                if tm.length(gradient) < 0.0005:
                     boundary = False
 
                 #  --------------------------------------

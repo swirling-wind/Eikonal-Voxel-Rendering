@@ -10,11 +10,17 @@ ti.init(arch=ti.gpu)
 
 scene, floor_height = setup_voxel_scene()
 
-sampler_multiplier = 6
+sampler_multiplier = 7
 to_load_save = True
 plotter = Plotter(sampler_multiplier, floor_height)
 
-scene.ior = ndimage.gaussian_filter(scene.ior, sigma=1.0, radius=1)
+GAUSSIAN_SIGMA = 2.0
+GAUSSIAN_RADIUS = 2
+
+scene.ior = ndimage.gaussian_filter(scene.ior, sigma=GAUSSIAN_SIGMA, radius=GAUSSIAN_RADIUS)
+scene.attenuation = ndimage.gaussian_filter(scene.attenuation, sigma=GAUSSIAN_SIGMA, radius=GAUSSIAN_RADIUS)
+scene.scatter_strength = ndimage.gaussian_filter(scene.scatter_strength, sigma=GAUSSIAN_SIGMA, radius=GAUSSIAN_RADIUS)
+
 scene.gradient = compute_ior_gradient(scene.ior)
 
 scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, sampler_multiplier, 
