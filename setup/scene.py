@@ -12,7 +12,7 @@ from common.math_utils import np_normalize, np_rotate_matrix
 
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (800, 600)
+SCREEN_RES = (1280, 720)
 UP_DIR = (0, 1, 0)
 HELP_MSG_TRANSLATE = '''
 ====================================================
@@ -248,14 +248,14 @@ class Scene:
         if translate_mode:
             print(HELP_MSG_TRANSLATE)
             self.window = ti.ui.Window("Ray marching (Translate mode)",
-                                   (1200, 900),
+                                   SCREEN_RES,
                                    vsync=True)
         
             self.camera = TranslateCamera(self.window, up=UP_DIR)
         
         else:
             self.window = ti.ui.Window("Ray marching (Rotate mode)",
-                                   (1200, 900),
+                                   SCREEN_RES,
                                    vsync=True)
         
             self.camera = RotateCamera(self.window, up=UP_DIR)

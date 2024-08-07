@@ -50,13 +50,35 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
             scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.03, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
 
+# @ti.func
+# def ellipse(pos, x, y, z, r):
+# 	return (x-pos[0])**2 + (y-pos[1])**2 + (z-pos[2])**2/2 - 3
+
+# @ti.func
+# def wineglass_range(x, y, z):
+# 	return x**2 + y**2 - (ti.log(z+3.2))**2 - 0.02
+
+# @ti.func
+# def add_wineglass(size: int):
+#     N = size
+#     color = tm.vec3(0, 0.3, 0.3)
+#     for i, j, k in ti.ndrange((-N, N), (-N, N // 2), (-N, N)):
+#         x, y, z = float(i) / (N/3), float(j) / (N/3), float(k) / (N/3)
+#         if wineglass_range(x, y, z) <= 0 and ellipse(tm.vec3(0, 0, 3.0), x, y, z, 1) >= 0:
+#             scene.set_voxel(tm.vec3(i, k, j), tm.vec3(0, 0, 0), 1, color, ior=GLASS_IOR)
+#             scene.set_voxel_data(tm.vec3(i, k, j), tm.vec3(0, 0, 0), atten=0.03, scatter_strength=0.5,
+#                                  anisotropy_factor=0.0, opaque=0)
+
 @ti.kernel
 def initialize_voxels(bunny_field: ti.template(), glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
     add_ball(LARGE_R, tm.vec3(-34, floor_ratio * 64 / 2 + 16, 20), 1, RED, GLASS_IOR)
     add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
-    add_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
-    add_bunny(bunny_field, tm.vec3(-4, floor_ratio * 64 + 16, 10), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
+    # add_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
+    add_bunny(bunny_field, tm.vec3(-10, floor_ratio * 64 + 16, -40), 1, GREY, GLASS_IOR, num_x, num_y, num_z)
     
+    
+    # add_wineglass(44)
+
     # scene.set_voxel(tm.vec3(0,0,0), tm.vec3(0,20,0), 1, RED, GLASS_IOR) # for debugging
 
 def setup_voxel_scene() -> tuple[Scene, int]:
@@ -64,8 +86,9 @@ def setup_voxel_scene() -> tuple[Scene, int]:
 
     num_x, num_y, num_z = NUM_XYZ
     bunny_voxels = load_and_voxelize_mesh("./assets/bun_zipper_res3.ply", NUM_XYZ, 0.0025)
-    glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
-    bunny_field, glass_field = setup_fields(bunny_voxels, glass_voxels, NUM_XYZ)
+    # glass_voxels = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
+    bunny_field = setup_fields(bunny_voxels, NUM_XYZ)
+    glass_field = None # setup_fields(glass_voxels, NUM_XYZ)
     
     floor_ratio_val = -0.9
     print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height(num_y, floor_ratio_val))
