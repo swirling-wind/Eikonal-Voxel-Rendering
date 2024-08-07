@@ -14,7 +14,7 @@ from common.math_utils import np_normalize, np_rotate_matrix
 VOXEL_DX = 1 / 64
 SCREEN_RES = (800, 600)
 UP_DIR = (0, 1, 0)
-HELP_MSG = '''
+HELP_MSG_TRANSLATE = '''
 ====================================================
 * Drag with your left mouse button to rotate camera
 * Press W/A/S/D/Q/E to move camera
@@ -24,7 +24,7 @@ HELP_MSG = '''
 MAT_LAMBERTIAN = 1
 MAT_LIGHT = 2
 
-class Camera:
+class TranslateCamera:
     def __init__(self, window, up):
         self._window = window
         self._camera_pos = np.array((0.0, 0.5, 4.0))
@@ -169,13 +169,16 @@ class Scene:
             render_res_list.append(transposed_img)
         return render_res_list
 
-    def rt_render(self):
+    def rt_render(self, translate_mode: bool = True):
         torch.cuda.empty_cache()
-        print(HELP_MSG)
-        self.window = ti.ui.Window("Ray marching",
+        
+        if translate_mode:
+            print(HELP_MSG_TRANSLATE)
+            self.window = ti.ui.Window("Ray marching (Translate mode)",
                                    (1200, 900),
                                    vsync=True)
-        self.camera = Camera(self.window, up=UP_DIR)
+        
+            self.camera = TranslateCamera(self.window, up=UP_DIR)
         self.renderer.set_camera_pos(*self.camera.position)
         self.renderer.set_look_at(*self.camera.look_at)
         self.renderer.reset_framebuffer()

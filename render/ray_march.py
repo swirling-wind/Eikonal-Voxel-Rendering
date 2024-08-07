@@ -192,6 +192,15 @@ class Renderer:
         d = (d + fu * du + fv * dv).normalized()
         return d
 
+    @ti.func
+    def intersect_floor(self, p, d):
+        intersection_point = tm.vec3(inf)
+        if d[1] < -eps:
+            dist = (self.floor_height[None] - p[1]) / d[1]
+            intersection_point = p + dist * d
+        return intersection_point
+
+
     @ti.kernel
     def ray_marching(self):        
         for u, v in self.color_buffer:
@@ -281,7 +290,17 @@ class Renderer:
 
                     # Original reflection model
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
-                    reflectionColor = self.sky_color(reflect_dir)
+                    reflect_pos = pos
+
+                    intersect_pos = self.intersect_floor(reflect_pos, reflect_dir)
+                    reflectionColor = tm.vec3(0.0)
+                    # if the reflection ray intersects the floor plane, set the reflection color to the floor color and its irradiance
+                    if intersect_pos[1] < 1.0 and self.pos_inside_particle_grid(intersect_pos):
+                        reflectionColor = self.floor_color[None] + tm.vec3(voxelIrrad / 255.0) * 9.0
+
+                    # else if not intersected, set the reflection color to the sky color
+                    else:
+                        reflectionColor = self.sky_color(reflect_dir)
                     # VOXELREFLECTIONDATA_RGB = tm.vec3(1.0)
                     # VOXELREFLECTIONDATA_A = 0.8
                     Ir += reflectionColor # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
@@ -293,7 +312,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 2.8
+                Ic = scatterStrength * Is + Ir * R * 1.8
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
