@@ -95,8 +95,8 @@ class Renderer:
         self.atten.fill(0.0)
         self.scatter_strength.fill(0.0)
 
-        # hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
-        hdr_image = ti.tools.imread('assets/Tokyo_BigSight_3k.hdr').astype('float32')
+        hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
+        # hdr_image = ti.tools.imread('assets/Tokyo_BigSight_3k.hdr').astype('float32')
 
         self.hdr_img.from_numpy(hdr_image / 255)
         self.hdr_process(self.exposure, 2.2)

@@ -110,6 +110,79 @@ class TranslateCamera:
             return np.array([-1.0, 0.0, 0.0])
         return np.cross(self._up, tgtdir)
 
+class RotateCamera:
+    def __init__(self, window, up):
+        self._window = window
+        self._camera_pos = np.array((0.0, 0.0, 4.0))
+        self._lookat_pos = np.array((0.0, 0.0, 0.0))
+        self._up = np_normalize(np.array(up))
+        # self._last_mouse_pos = None
+        self._world_up = np.array((0.0, 1.0, 0.0))
+
+    def update_camera(self):
+        res = self._update_by_wasd()
+        return res
+
+    def _update_by_wasd(self):
+        win = self._window
+        tgtdir = self.target_dir
+        leftdir = self._compute_left_dir(tgtdir)
+        updir = self._up
+        lut = [
+            ('w', tgtdir, 0.0),
+            ('s', -tgtdir, 0.0),
+            ('a', self._world_up, -0.05),
+            ('d', self._world_up, 0.05),
+            ('e', leftdir, -0.05),
+            ('q', leftdir, 0.05),
+        ]
+        pressed = False
+        for key, d, angle in lut:
+            if win.is_pressed(key):
+                pressed = True
+                if key in ['w', 's']:
+                    self._camera_pos += d * 0.05 # Translate
+                else:
+                    self._rotate_camera(d, angle) # Rotate
+        return pressed
+
+    def _rotate_camera(self, axis, angle):
+        rot_mat = self._rotation_matrix(axis, angle)
+        cam_pos = self._camera_pos - self._lookat_pos
+        cam_pos = np.dot(rot_mat, cam_pos)
+
+        self._camera_pos = cam_pos + self._lookat_pos
+        self._up = np.dot(rot_mat, self._up)
+
+    def _rotation_matrix(self, axis, angle):
+        cos_val = np.cos(angle)
+        sin_val = np.sin(angle)
+        x, y, z = axis
+        rot_mat = np.array([
+            [cos_val + x**2 * (1 - cos_val), x*y * (1 - cos_val) - z*sin_val, x*z * (1 - cos_val) + y*sin_val],
+            [y*x * (1 - cos_val) + z*sin_val, cos_val + y**2 * (1 - cos_val), y*z * (1 - cos_val) - x*sin_val],
+            [z*x * (1 - cos_val) - y*sin_val, z*y * (1 - cos_val) + x*sin_val, cos_val + z**2 * (1 - cos_val)]
+        ])
+        return rot_mat
+
+    @property
+    def position(self):
+        return self._camera_pos
+
+    @property
+    def look_at(self):
+        return self._lookat_pos
+
+    @property
+    def target_dir(self):
+        return np_normalize(self.look_at - self.position)
+
+    def _compute_left_dir(self, tgtdir):
+        cos = np.dot(self._up, tgtdir)
+        if abs(cos) > 0.999:
+            return np.array([-1.0, 0.0, 0.0])
+        return np.cross(self._up, tgtdir)
+
 
 class Scene:
     def __init__(self, voxel_edges=0.06, exposure=3.0):        
@@ -179,6 +252,14 @@ class Scene:
                                    vsync=True)
         
             self.camera = TranslateCamera(self.window, up=UP_DIR)
+        
+        else:
+            self.window = ti.ui.Window("Ray marching (Rotate mode)",
+                                   (1200, 900),
+                                   vsync=True)
+        
+            self.camera = RotateCamera(self.window, up=UP_DIR)
+
         self.renderer.set_camera_pos(*self.camera.position)
         self.renderer.set_look_at(*self.camera.look_at)
         self.renderer.reset_framebuffer()

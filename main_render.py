@@ -23,4 +23,4 @@ scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, sampler_multip
                                                            to_load_save=to_load_save, plotter=plotter)
 
 scene.truncate_outside_surface(gradient_threshold=0.06) # Post process the scene
-scene.rt_render()
+scene.rt_render(translate_mode=False)
