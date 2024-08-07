@@ -37,10 +37,6 @@ class Renderer:
         self.anisotropy_factor = ti.field(dtype=ti.f32)
         self.opaque = ti.field(dtype=ti.i8)
 
-        # HDR map
-        self.hdr_img = ti.Vector.field(3, dtype=ti.f32)
-        self.hdr_img_size = (3200, 1600)
-
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.light_direction_noise = ti.field(dtype=ti.f32, shape=())
@@ -66,6 +62,10 @@ class Renderer:
         self.voxel_grid_res = 128
         voxel_grid_offset = [-self.voxel_grid_res // 2 for _ in range(3)]
 
+        # HDR map
+        self.hdr_img = ti.Vector.field(3, dtype=ti.f32)
+        self.hdr_img_size = (2000, 1000)
+
         ti.root.dense(ti.ij, image_res).place(self.color_buffer)
         ti.root.dense(ti.ij, self.hdr_img_size).place(self.hdr_img)
         ti.root.dense(ti.ijk,
@@ -85,7 +85,7 @@ class Renderer:
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
         self.set_up(*up)
-        self.set_fov(0.4) # 0.23
+        self.set_fov(0.6) # 0.23
 
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
@@ -95,8 +95,9 @@ class Renderer:
         self.atten.fill(0.0)
         self.scatter_strength.fill(0.0)
 
-        hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
+        # hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
         # hdr_image = ti.tools.imread('assets/Tokyo_BigSight_3k.hdr').astype('float32')
+        hdr_image = ti.tools.imread('assets/wooden_frame_room.hdr').astype('float32')
 
         self.hdr_img.from_numpy(hdr_image / 255)
         self.hdr_process(self.exposure, 2.2)
@@ -138,15 +139,21 @@ class Renderer:
         self.light_color[None] = light_color
 
     @ti.func
-    def inside_grid(self, ipos: ti.i32) -> bool:
-        return ipos.min() >= -self.voxel_grid_res // 2 and ipos.max(
-        ) < self.voxel_grid_res // 2
-
-    @ti.func
     def _to_voxel_index(self, pos: tm.vec3) -> tm.vec3:
         p = pos * self.voxel_inv_dx # voxel_inv_dx is 1 / dx, equal to 64
         voxel_index = ti.floor(p).cast(ti.i32) # type: ignore
         return voxel_index
+    
+    @ti.func
+    def ipos_inside_grid(self, ipos: tm.vec3) -> bool:
+        return ipos.min() >= -self.voxel_grid_res // 2 and ipos.max(
+        ) < self.voxel_grid_res // 2
+    
+    @ti.func
+    def pos_inside_grid(self, pos: tm.vec3) -> bool:
+        return pos.min() >= -1.0 and pos.max() < 1.0 - self.voxel_dx
+
+
     
 
     @ti.func
@@ -211,10 +218,10 @@ class Renderer:
         cam_pos = self.camera_pos[None]
         d = self.get_cast_dir(u, v)
         
-        # Leave safe margin to avoid self-intersection
         bbox_min = self.bbox[0]
         bbox_max = self.bbox[1]
         inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, cam_pos, d)
+        # inter, near_pos = ray_aabb_intersection_point(tm.vec3(-1.0 + self.voxel_dx), tm.vec3(1.0 - self.voxel_dx), cam_pos, d)
 
         hit_floor = 0
         floor_inv_pos = cam_pos
@@ -257,7 +264,7 @@ class Renderer:
                 ANISOTROPY_FACTOR = 0.7 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 3.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 2.5) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -279,7 +286,6 @@ class Renderer:
                     R = 1 / tm.pow(1 + ti.abs(tm.dot(tm.normalize(gradient), tm.normalize(d))), 2.0)
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
-
                     
                     # Phong reflection model
                     view_dir = -tm.normalize(d)
@@ -288,7 +294,7 @@ class Renderer:
                     reflect_dir = tm.reflect(-light_dir, normal)
                     Ir += tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
 
-                    # Original reflection model
+                    # BRDF reflection model
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
                     reflect_pos = pos
 
@@ -297,9 +303,7 @@ class Renderer:
                     # if the reflection ray intersects the floor plane, set the reflection color to the floor color and its irradiance
                     if intersect_pos[1] < 1.0 and self.pos_inside_particle_grid(intersect_pos):
                         reflectionColor = self.floor_color[None] + tm.vec3(voxelIrrad / 255.0) * 9.0
-
-                    # else if not intersected, set the reflection color to the sky color
-                    else:
+                    else:  # else if not intersected, set the reflection color to the sky color
                         reflectionColor = self.sky_color(reflect_dir)
                     # VOXELREFLECTIONDATA_RGB = tm.vec3(1.0)
                     # VOXELREFLECTIONDATA_A = 0.8
@@ -312,12 +316,12 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 1.8
+                Ic = scatterStrength * Is + Ir * R * 2.0
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
                 # check if we are not outside of the volume
-                if (not self.pos_inside_particle_grid(pos)): # or (not self.inside_grid(voxel_index)):
+                if (not self.pos_inside_particle_grid(pos)): # (not self.pos_inside_grid(pos)): #
                     break
 
                 if pos[1] <= self.floor_height[None]:
@@ -363,8 +367,7 @@ class Renderer:
                     ti.atomic_min(self.bbox[0][d], (I[d] - 1) * self.voxel_dx)
                     ti.atomic_max(self.bbox[1][d], (I[d] + 2) * self.voxel_dx)
         
-        # the bounding box is above the floor, lower it
-        self.bbox[0][1] = self.bbox[0][1] - 2 * self.voxel_dx
+        self.bbox[0][1] = self.floor_height[None] - self.voxel_dx
 
     def reset_framebuffer(self):
         self.current_spp = 0

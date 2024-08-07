@@ -8,13 +8,15 @@ import numpy as np
 # debug=True to check boundary access
 ti.init(arch=ti.gpu)
 
-scene, floor_height = setup_voxel_scene()
+# "geometry", "bunny", "footed_glass", "stemmed_glass"
+scene_name = "bunny"
+scene, floor_height = setup_voxel_scene(scene_name)
 
-sampler_multiplier = 6
+sampler_multiplier = 5
 to_load_save = True
 plotter = Plotter(sampler_multiplier, floor_height)
 
-GAUSSIAN_SIGMA = 2.0
+GAUSSIAN_SIGMA = 1.5
 GAUSSIAN_RADIUS = 2
 
 scene.apply_filter(sigma=GAUSSIAN_SIGMA, radius=GAUSSIAN_RADIUS)
@@ -22,5 +24,5 @@ scene.gradient = compute_ior_gradient(scene.ior)
 scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, sampler_multiplier, 
                                                            to_load_save=to_load_save, plotter=plotter)
 
-scene.truncate_outside_surface(gradient_threshold=0.06) # Post process the scene
+scene.truncate_outside_surface(gradient_threshold=0.05) # Post process the scene
 scene.rt_render(translate_mode=True)

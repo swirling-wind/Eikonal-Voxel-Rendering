@@ -1,6 +1,6 @@
 from common.plot import Plotter
 
-from setup.voxel_setup import Scene, NUM_XYZ, floor_height
+from setup.voxel_setup import Scene, NUM_XYZ
 from data.np_grid import *
 from simulation.simulate_utils import *
 
