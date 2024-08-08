@@ -48,7 +48,6 @@ class Renderer:
         # self.cast_voxel_index = ti.Vector.field(3, ti.i32, shape=())
 
         # Scene settings
-        # self.voxel_edges = voxel_edges
         self.exposure = exposure
         self.camera_pos = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.look_at = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -81,11 +80,12 @@ class Renderer:
 
                                                 self.atten,
                                                 self.scatter_strength,
+                                                # self.emission,
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
         self.set_up(*up)
-        self.set_fov(0.5) # 0.23
+        self.set_fov(0.6) # 0.23
 
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
@@ -216,7 +216,6 @@ class Renderer:
         bbox_min = self.bbox[0]
         bbox_max = self.bbox[1]
         inter, near_pos = ray_aabb_intersection_point(bbox_min, bbox_max, cam_pos, d)
-        # inter, near_pos = ray_aabb_intersection_point(tm.vec3(-1.0 + self.voxel_dx), tm.vec3(1.0 - self.voxel_dx), cam_pos, d)
 
         hit_floor = 0
         floor_inv_pos = cam_pos
@@ -254,14 +253,14 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += voxelAtt # * step_size * self.voxel_inv_dx
+                A += voxelAtt / 1.5 # * step_size * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term 
                 ANISOTROPY_FACTOR = 0.1 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 32.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 4.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -302,7 +301,7 @@ class Renderer:
                     if intersect_pos[1] < 1.0 and self.pos_inside_particle_grid(intersect_pos):
                         # print(u, v, "\tintersect_pos: ", intersect_pos)
                         floor_irrad = trilinear_interp(self.irrad, intersect_pos * self.voxel_inv_dx)
-                        reflectionColor = self.floor_color[None] + tm.vec3(floor_irrad / 255.0)
+                        reflectionColor = self.floor_color[None] + tm.vec3(floor_irrad / 255.0) * 3.0
                     else:  # else if not intersected, set the reflection color to the sky color
                         reflectionColor = self.sky_color(reflect_dir)
 
@@ -317,7 +316,9 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R
+                SCATTER_FACTOR = 0.6
+                REFLECTION_FACTOR = 2.0
+                Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
@@ -394,7 +395,16 @@ class Renderer:
         for i in ti.static(range(3)):
             r[i] = ti.cast(c[i], ti.f32) / 255.0
         return r
-
+    
+    @staticmethod
+    @ti.func
+    def round_idx(idx_: tm.vec3) -> tm.vec3:
+        idx = ti.cast(idx_, ti.f32)
+        return ti.Vector(
+            [ti.round(idx[0]), # type: ignore
+             ti.round(idx[1]), # type: ignore
+             ti.round(idx[2])]).cast(ti.i32) # type: ignore
+    
     @ti.func
     def set_voxel(self, idx, mat, color: tm.vec3, ior=1.0):
         self.voxel_material[idx] = ti.cast(mat, ti.i8)
@@ -405,12 +415,3 @@ class Renderer:
     def set_voxel_data(self, idx, atten: ti.f32, scatter_strength: ti.f32):
         self.atten[idx] = atten
         self.scatter_strength[idx] = scatter_strength
-
-    @staticmethod
-    @ti.func
-    def round_idx(idx_: tm.vec3) -> tm.vec3:
-        idx = ti.cast(idx_, ti.f32)
-        return ti.Vector(
-            [ti.round(idx[0]), # type: ignore
-             ti.round(idx[1]), # type: ignore
-             ti.round(idx[2])]).cast(ti.i32) # type: ignore

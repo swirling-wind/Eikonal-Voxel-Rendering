@@ -144,7 +144,8 @@ def get_irrad_loc_dir(scene: Scene, scene_config: dict, plotter: Plotter, gaussi
     else:
         print("Running simulation")
         step_size = 0.3 * (NUM_XYZ[1] / 100)
-        num_steps = int(1.4 * (NUM_XYZ[1]  / step_size))
+        num_steps = int(1.8 * (NUM_XYZ[1]  / step_size))
+        torch.cuda.empty_cache()
 
         initial_wavefront_pos, initial_wavefront_dir = generate_initial_wavefront(sampler_multiplier, POS_PERTURBATION_SCALE, *NUM_XYZ)
 

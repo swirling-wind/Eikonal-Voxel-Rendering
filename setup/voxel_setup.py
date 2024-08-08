@@ -9,6 +9,7 @@ import numpy as np
 GLASS_IOR = 1.5
 RED, BLUE, GREY, WHITE, AZURE = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
 
+ATTENUATION = 0.01
 ############### Add different objects ###############
 @ti.func
 def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8, 
@@ -18,14 +19,14 @@ def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8,
         xyz = tm.ivec3(i, j, k)
         if xyz.dot(xyz) < r**2: 
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.03, scatter_strength=0.5)
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=ATTENUATION, scatter_strength=0.5)
             
 @ti.func
 def add_cube(side_len: int, left_bottom_corner: tm.vec3, mat: ti.i8, 
              color: tm.vec3, voxel_ior: float):
     for i, j, k in ti.ndrange(side_len, side_len, side_len):
         scene.set_voxel(tm.vec3(i, j, k), left_bottom_corner, mat, color, ior=voxel_ior)
-        scene.set_voxel_data(tm.vec3(i, j, k), left_bottom_corner, atten=0.03, scatter_strength=0.5)
+        scene.set_voxel_data(tm.vec3(i, j, k), left_bottom_corner, atten=ATTENUATION, scatter_strength=0.5)
 
 @ti.func
 def add_stemmed_glass(glass_field, origin: tm.vec3, mat: ti.i8, 
@@ -33,7 +34,7 @@ def add_stemmed_glass(glass_field, origin: tm.vec3, mat: ti.i8,
     for i, j, k in ti.ndrange(num_x, num_y, num_z):
         if glass_field[i, j, k] == 1:
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.03, scatter_strength=0.5)
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=ATTENUATION, scatter_strength=0.5)
 
 @ti.func 
 def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8, 
@@ -41,14 +42,14 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
     for i, j, k in ti.ndrange(num_x, num_y, num_z):
         if bunny_field[i, j, k] == 1:
             scene.set_voxel(tm.vec3(i, j, k), origin, mat, color, ior=voxel_ior)
-            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.03, scatter_strength=0.5)
+            scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=ATTENUATION, scatter_strength=0.5)
             
 ############### Init different scenes ###############
 @ti.kernel
 def init_geometry(floor_ratio: float):
     LARGE_R, CUBE_LEN = 50, 35
     add_ball(LARGE_R, tm.vec3(0, floor_ratio * 64 / 2 + 26, 0), 1, RED, GLASS_IOR)
-    # add_cube(CUBE_LEN, tm.vec3(-50, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
+    add_cube(CUBE_LEN, tm.vec3(-50, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
 
 @ti.kernel
 def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int):
@@ -69,6 +70,16 @@ def init_bunny(bunny_field: ti.template(), floor_ratio: float, num_x: int, num_y
 #             scene.set_voxel(tm.vec3(i, k, j), tm.vec3(0, 0, 0), 1, color, ior=GLASS_IOR)
 #             scene.set_voxel_data(tm.vec3(i, k, j), tm.vec3(0, 0, 0), atten=0.03, scatter_strength=0.5,
 #                                  anisotropy_factor=0.0, opaque=0)
+
+# @ti.kernel
+# def init_ceiling_light(num_x: int, num_y: int, num_z: int):
+#     ceiling_y = num_y // 2 - 1
+#     # fill the toppest layer of x-z plane with light
+#     for x, z in ti.ndrange((-num_x // 2 + 1, num_x // 2 - 1), (-num_z // 2 + 1, num_z // 2 - 1)):
+#         scene.set_voxel(tm.vec3(x, ceiling_y, z), tm.vec3(0), 1, WHITE, GLASS_IOR)
+#         scene.set_voxel_data(tm.vec3(x, ceiling_y, z), tm.vec3(0), atten=0.03, scatter_strength=0.5)
+#         scene.set_voxel_emit(tm.vec3(x, ceiling_y, z), tm.vec3(0), WHITE)
+
 @ti.kernel
 def init_debug_voxel():
     scene.set_voxel(tm.vec3(0,-60,0), tm.vec3(0,0,0), 1, RED, 1.0)
@@ -102,7 +113,5 @@ def setup_voxel_scene(scene_config: dict) -> Scene:
         stemmed_glass_voxel = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
         stemmed_glass_field = setup_fields(stemmed_glass_voxel, NUM_XYZ)
         init_stemmed_glass(stemmed_glass_field, floor_ratio_val, num_x, num_y, num_z)
-
-    # init_debug_voxel()
     
     return scene

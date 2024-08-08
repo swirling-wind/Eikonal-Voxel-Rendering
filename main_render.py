@@ -6,7 +6,6 @@ import taichi as ti
 from scipy import ndimage
 import numpy as np
 
-# debug=True to check boundary access
 # ti.init(arch=ti.gpu, debug=True)
 ti.init(arch=ti.gpu)
 
@@ -14,13 +13,16 @@ SCENE_CFG = {
     # Optional Names: "geometry", "bunny", "footed_glass", "stemmed_glass"
     "Name": "geometry", 
      
-    "HDR Res": (4000, 2000), 
-    "HDR Name": "Dark_night_4k.hdr",
+    # "HDR Res": (4000, 2000), 
+    # "HDR Name": "Dark_night_4k.hdr",
+
+    "HDR Res": (2000, 1000),
+    "HDR Name": "Light_wooden_frame_room_2k.hdr",
     
     "NUM XYZ": (128, 128, 128),
     'Floor Ratio': -0.95,
 
-    "Sampler Num": 5,
+    "Sampler Num": 6,
 
     "Load Save": True,
 }

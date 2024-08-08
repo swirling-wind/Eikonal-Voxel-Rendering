@@ -184,24 +184,6 @@ class Scene:
     def scatter_strength(self, scatter_field: ti.types.ndarray()):
         self.renderer.scatter_strength.from_numpy(scatter_field)
 
-    #### Anisotropy factor ####
-    # @property
-    # def anisotropy_factor(self) -> np.ndarray:
-    #     return self.renderer.anisotropy_factor.to_numpy()
-    
-    # @anisotropy_factor.setter
-    # def anisotropy_factor(self, aniso_field: ti.types.ndarray()):
-    #     self.renderer.anisotropy_factor.from_numpy(aniso_field)
-    
-    # #### Opaque ####
-    # @property
-    # def opaque(self) -> np.ndarray:
-    #     return self.renderer.opaque.to_numpy()
-    
-    # @opaque.setter
-    # def opaque(self, opaque_field: ti.types.ndarray()):
-    #     self.renderer.opaque.from_numpy(opaque_field)
-
     #### Truncate outside the surface of objects ####
     def truncate_outside_surface(self, gradient_threshold: float = 0.05):
         outside_mask = np.linalg.norm(self.gradient, axis=-1) < gradient_threshold
