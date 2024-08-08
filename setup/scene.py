@@ -387,7 +387,10 @@ class Scene:
         temp_grad[outside_mask, :] = 0
         self.gradient = temp_grad
 
-    def apply_filter(self, sigma: float = 2.0, radius: int = 2):
+    def apply_filter(self, config: dict):
+        sigma = config["Gaus Sigma"]
+        radius = config["Gaus Radius"]
+        
         self.ior = gaussian_filter(self.ior, sigma=sigma, radius=radius)
         self.attenuation = gaussian_filter(self.attenuation, sigma=sigma, radius=radius)
         self.scatter_strength = gaussian_filter(self.scatter_strength, sigma=sigma, radius=radius)

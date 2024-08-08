@@ -79,7 +79,7 @@ def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: in
 def init_debug_voxel():
     scene.set_voxel(tm.vec3(0,-60,0), tm.vec3(0,0,0), 1, RED, 1.0) 
 
-def setup_voxel_scene(load_scene='geometry') -> tuple[Scene, int]:
+def setup_voxel_scene(config: dict) -> Scene:
     global scene
 
     num_x, num_y, num_z = NUM_XYZ    
@@ -92,6 +92,9 @@ def setup_voxel_scene(load_scene='geometry') -> tuple[Scene, int]:
     scene.set_background_color((0.05, 0.05, 0.4))
     scene.set_floor(height=floor_ratio_val, color=tm.vec3(0.2, 0.2, 0.2))
 
+    config['Floor Height'] = floor_height
+    load_scene = config["Name"]
+    
     if load_scene == 'geometry':
         init_geometry(floor_ratio_val)
     elif load_scene == 'bunny':
@@ -107,4 +110,4 @@ def setup_voxel_scene(load_scene='geometry') -> tuple[Scene, int]:
 
     # init_debug_voxel()
     
-    return scene, floor_height
+    return scene

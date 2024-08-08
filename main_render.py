@@ -8,29 +8,29 @@ import numpy as np
 # debug=True to check boundary access
 ti.init(arch=ti.gpu)
 
-# "geometry", "bunny", "footed_glass", "stemmed_glass"
-# scene_name = "bunny"
 
-CONFIG = {
+SCENE_CFG = {
+    # Optional Names: "geometry", "bunny", "footed_glass", "stemmed_glass"
     "Name": "geometry",
-
+    'Floor Height': 0,
     "Sampler Num": 5,
-    "Gaus Sigma": 2.0,
-    "Gaus Radius": 2,
-
-    "Grad Threshold": 0.05,
 
     "Load Save": True,
 }
 
-scene, floor_height = setup_voxel_scene(CONFIG["Name"])
+PROC_CFG = {
+    "Gaus Sigma": 2.0,
+    "Gaus Radius": 2,
 
-plotter = Plotter(CONFIG["Sampler Num"], floor_height)
+    "Grad Threshold": 0.05,
+}
 
-scene.apply_filter(sigma=CONFIG["Gaus Sigma"], radius=CONFIG["Gaus Radius"])
+scene = setup_voxel_scene(SCENE_CFG)
+plotter = Plotter(SCENE_CFG)
+
+scene.apply_filter(PROC_CFG)
 scene.gradient = compute_ior_gradient(scene.ior)
-scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, CONFIG["Sampler Num"], 
-                                                           to_load_save=CONFIG["Load Save"], plotter=plotter)
+scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, SCENE_CFG, plotter=plotter)
 
-scene.truncate_outside_surface(gradient_threshold=CONFIG["Grad Threshold"]) # Post process the scene
+scene.truncate_outside_surface(gradient_threshold=PROC_CFG["Grad Threshold"]) # Post process the scene
 scene.rt_render(translate_mode=True)
