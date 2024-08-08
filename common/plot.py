@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 
+from setup.scene_utils import get_floor_height
+
 PLOT_STRIDE_LENGTH = 709  # 439# 293 # 
 FIG_SIZE = (5, 5)
 
@@ -14,7 +16,7 @@ def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray
 class Plotter:
     def __init__(self, config: dict):
         self.sampler_multiplier = config['Sampler Num']
-        self.floor_height = config['Floor Height']
+        self.floor_height = get_floor_height(config['NUM XYZ'][1], config['Floor Ratio'])
 
     def plot_gradient(self, grad_xyz: np.ndarray, threshold: float = 0.1, alpha: float = 0.05):
         fig = plt.figure(figsize=FIG_SIZE)

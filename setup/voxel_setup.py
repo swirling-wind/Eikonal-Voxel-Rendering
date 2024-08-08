@@ -6,12 +6,12 @@ import taichi as ti
 import taichi.math as tm
 import numpy as np
 
-NUM_XYZ = (128, 128, 128)
 GLASS_IOR = 1.5
 LARGE_R, CUBE_LEN = 23, 30
 
 RED, BLUE, GREY, WHITE, AZURE = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
 
+############### Add different objects ###############
 @ti.func
 def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8, 
              color: tm.vec3, voxel_ior: float):
@@ -40,12 +40,6 @@ def add_stemmed_glass(glass_field, origin: tm.vec3, mat: ti.i8,
             scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.03, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
 
-
-@ti.kernel
-def init_geometry(floor_ratio: float):
-    add_ball(LARGE_R, tm.vec3(-34, floor_ratio * 64 / 2 + 16, 20), 1, RED, GLASS_IOR)
-    add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
-
 @ti.func 
 def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8, 
               color: tm.vec3, voxel_ior: float, num_x: int, num_y: int, num_z: int):
@@ -55,6 +49,16 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
             scene.set_voxel_data(tm.vec3(i, j, k), origin, atten=0.03, scatter_strength=0.5,
                                   anisotropy_factor=0.0, opaque=0)
             
+############### Init different scenes ###############
+@ti.kernel
+def init_geometry(floor_ratio: float):
+    add_ball(LARGE_R, tm.vec3(-34, floor_ratio * 64 / 2 + 16, 20), 1, RED, GLASS_IOR)
+    add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
+
+@ti.kernel
+def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int):
+    # coordinate z must be minus, because of the potential index out of range of the voxel field
+    add_stemmed_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z)
 
 @ti.kernel
 def init_bunny(bunny_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
@@ -72,18 +76,18 @@ def init_footed_glass(height: int):
                                  anisotropy_factor=0.0, opaque=0)
 
 @ti.kernel
-def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int):
-    add_stemmed_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z) # coordinate z must be minus, because of the potential index out of range of the voxel field
-
-@ti.kernel
 def init_debug_voxel():
-    scene.set_voxel(tm.vec3(0,-60,0), tm.vec3(0,0,0), 1, RED, 1.0) 
+    scene.set_voxel(tm.vec3(0,-60,0), tm.vec3(0,0,0), 1, RED, 1.0)
+    
 
 def setup_voxel_scene(config: dict) -> Scene:
     global scene
 
-    num_x, num_y, num_z = NUM_XYZ    
-    floor_ratio_val = -0.95
+    NUM_XYZ = config['NUM XYZ']
+    num_x, num_y, num_z = NUM_XYZ
+    floor_ratio_val = config['Floor Ratio']
+    load_scene = config["Name"]
+    
     floor_height = get_floor_height(num_y, floor_ratio_val)
     print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height)
     
@@ -91,9 +95,6 @@ def setup_voxel_scene(config: dict) -> Scene:
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
     scene.set_background_color((0.05, 0.05, 0.4))
     scene.set_floor(height=floor_ratio_val, color=tm.vec3(0.2, 0.2, 0.2))
-
-    config['Floor Height'] = floor_height
-    load_scene = config["Name"]
     
     if load_scene == 'geometry':
         init_geometry(floor_ratio_val)

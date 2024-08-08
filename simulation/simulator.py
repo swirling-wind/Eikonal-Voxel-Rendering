@@ -1,6 +1,6 @@
 from common.plot import Plotter
 
-from setup.voxel_setup import Scene, NUM_XYZ
+from setup.voxel_setup import Scene
 from data.np_grid import *
 from simulation.simulate_utils import *
 
@@ -137,6 +137,7 @@ def get_irrad_loc_dir(scene: Scene, config: dict, plotter: Plotter, gaussian_sig
 
     to_load_save = config["Load Save"]
     sampler_multiplier = config["Sampler Num"]
+    NUM_XYZ = config["NUM XYZ"]
     
     if to_load_save and irrad_loc_dir_save_exists(sampler_multiplier):
         raw_irradiance, local_diretion = load_irrad_loc_dir(sampler_multiplier)    

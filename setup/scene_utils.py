@@ -14,8 +14,6 @@ def origin_y(largest: int, r: int):
 def get_floor_height(num_y: int, floor_ratio: float) -> int:
     return int((1+floor_ratio) * num_y / 2)
 
-
-
 @ti.func
 def ellipse(pos, x, y, z, r):
 	return (x-pos[0])**2 + (y-pos[1])**2 + (z-pos[2])**2/2 - 3
