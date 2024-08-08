@@ -7,8 +7,6 @@ import taichi.math as tm
 import numpy as np
 
 GLASS_IOR = 1.5
-LARGE_R, CUBE_LEN = 23, 30
-
 RED, BLUE, GREY, WHITE, AZURE = tm.vec3(0.9, 0, 0.1), tm.vec3(0, 0.5, 1), tm.vec3(0.7, 0.7, 0.7), tm.vec3(1, 1, 1), tm.vec3(0.4, 0.7, 1)
 
 ############### Add different objects ###############
@@ -52,8 +50,9 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
 ############### Init different scenes ###############
 @ti.kernel
 def init_geometry(floor_ratio: float):
-    add_ball(LARGE_R, tm.vec3(-34, floor_ratio * 64 / 2 + 16, 20), 1, RED, GLASS_IOR)
-    add_cube(CUBE_LEN, tm.vec3(-52, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
+    LARGE_R, CUBE_LEN = 45, 35
+    add_ball(LARGE_R, tm.vec3(0, floor_ratio * 64 / 2 + 16, 10), 1, RED, GLASS_IOR)
+    add_cube(CUBE_LEN, tm.vec3(-50, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
 
 @ti.kernel
 def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int):

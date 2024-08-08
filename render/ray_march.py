@@ -300,6 +300,7 @@ class Renderer:
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
                     reflect_pos = pos
 
+                    # Check if the reflection ray intersects the floor plane and add the caustics
                     intersect_pos = self.intersect_floor(reflect_pos, reflect_dir)
                     reflectionColor = tm.vec3(0.0)
                     # if the reflection ray intersects the floor plane, set the reflection color to the floor color and its irradiance
@@ -334,7 +335,7 @@ class Renderer:
             if hit_floor: # hit the floor (add floor color and floor position's irradiance)
                 floor_irrad = trilinear_interp(self.irrad, floor_inv_pos)
                 floor_irrad_vec = tm.vec3(floor_irrad / 255.0)
-                contrib = I + (self.floor_color[None] + floor_irrad_vec * 3.0) * tm.exp(-A)
+                contrib = I + (self.floor_color[None] + floor_irrad_vec * 5.0) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
                 contrib = I + self.sky_color(d) * tm.exp(-A)
 
