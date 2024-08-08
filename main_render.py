@@ -12,7 +12,10 @@ ti.init(arch=ti.gpu)
 
 SCENE_CFG = {
     # Optional Names: "geometry", "bunny", "footed_glass", "stemmed_glass"
-    "Name": "geometry",
+    "Name": "geometry", 
+     
+    "HDR Res": (4000, 2000), 
+    "HDR Name": "Dark_night_4k.hdr",
     
     "NUM XYZ": (128, 128, 128),
     'Floor Ratio': -0.95,
@@ -23,10 +26,10 @@ SCENE_CFG = {
 }
 
 PROC_CFG = {
-    "Gaus Sigma": 2.0,
-    "Gaus Radius": 2,
+    "Gauss Sigma": 4.0,
+    "Gauss Radius": 2,
 
-    "Grad Threshold": 0.05,
+    "Grad Threshold": 0.01,
 }
 
 plotter = Plotter(SCENE_CFG)
@@ -35,6 +38,4 @@ scene = setup_voxel_scene(SCENE_CFG)
 scene.apply_filter(PROC_CFG)
 scene.gradient = compute_ior_gradient(scene.ior)
 scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, SCENE_CFG, plotter=plotter)
-
-scene.truncate_outside_surface(gradient_threshold=PROC_CFG["Grad Threshold"]) # Post process the scene
 scene.rt_render(translate_mode=True)

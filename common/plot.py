@@ -14,9 +14,9 @@ def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray
     return xx, yy, zz
 
 class Plotter:
-    def __init__(self, config: dict):
-        self.sampler_multiplier = config['Sampler Num']
-        self.floor_height = get_floor_height(config['NUM XYZ'][1], config['Floor Ratio'])
+    def __init__(self, scene_config: dict):
+        self.sampler_multiplier = scene_config['Sampler Num']
+        self.floor_height = get_floor_height(scene_config['NUM XYZ'][1], scene_config['Floor Ratio'])
 
     def plot_gradient(self, grad_xyz: np.ndarray, threshold: float = 0.1, alpha: float = 0.05):
         fig = plt.figure(figsize=FIG_SIZE)

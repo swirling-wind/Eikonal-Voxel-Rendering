@@ -130,21 +130,21 @@ def simulate_wavefront_propagation(ior_field: np.ndarray, grad_xyz: np.ndarray, 
 # num_monte_carlo_iterations = 4
 # avg_irradiance_grid = run_monte_carlo_simulation(num_monte_carlo_iterations, sampler_multiplier, pos_perturbation_scale)
 
-def get_irrad_loc_dir(scene: Scene, config: dict, plotter: Plotter, gaussian_sigma: float = 0.8,
+def get_irrad_loc_dir(scene: Scene, scene_config: dict, plotter: Plotter, gaussian_sigma: float = 0.8,
                       num_show_images = 0) -> tuple[np.ndarray, np.ndarray]:
     
     POS_PERTURBATION_SCALE = 0.45
 
-    to_load_save = config["Load Save"]
-    sampler_multiplier = config["Sampler Num"]
-    NUM_XYZ = config["NUM XYZ"]
+    to_load_save = scene_config["Load Save"]
+    sampler_multiplier = scene_config["Sampler Num"]
+    NUM_XYZ = scene_config["NUM XYZ"]
     
     if to_load_save and irrad_loc_dir_save_exists(sampler_multiplier):
         raw_irradiance, local_diretion = load_irrad_loc_dir(sampler_multiplier)    
     else:
         print("Running simulation")
         step_size = 0.3 * (NUM_XYZ[1] / 100)
-        num_steps = int(1.3 * (NUM_XYZ[1]  / step_size))
+        num_steps = int(1.4 * (NUM_XYZ[1]  / step_size))
 
         initial_wavefront_pos, initial_wavefront_dir = generate_initial_wavefront(sampler_multiplier, POS_PERTURBATION_SCALE, *NUM_XYZ)
 

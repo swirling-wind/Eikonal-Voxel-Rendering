@@ -11,7 +11,7 @@ from render.ray_march import Renderer
 from .camera import RotateCamera, TranslateCamera
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (1280, 720)
+SCREEN_RES = (1600, 900)
 UP_DIR = (0, 1, 0)
 HELP_MSG_TRANSLATE = '''
 ====================================================
@@ -24,11 +24,9 @@ MAT_LAMBERTIAN = 1
 MAT_LIGHT = 2
 
 class Scene:
-    def __init__(self, voxel_edges=0.06, exposure=3.0):        
-        self.renderer = Renderer(dx=VOXEL_DX, image_res=SCREEN_RES,
-                                 up=UP_DIR, voxel_edges=voxel_edges,
-                                 exposure=exposure)
-        
+    def __init__(self, hdr_res: tuple, hdr_name: str, exposure=3.0):        
+        self.renderer = Renderer(hdr_res, hdr_name, VOXEL_DX, SCREEN_RES, UP_DIR, exposure)
+
     @staticmethod
     @ti.func
     def round_idx(idx_: tm.vec3) -> tm.vec3:
@@ -45,10 +43,8 @@ class Scene:
 
     @ti.func
     def set_voxel_data(self, idx: tm.vec3, origin: tm.vec3,
-                       atten: ti.f32, scatter_strength: ti.f32, 
-                       anisotropy_factor: ti.f32, opaque: ti.u8):
-        self.renderer.set_voxel_data(self.round_idx(idx + origin), atten=atten, scatter_strength=scatter_strength,
-                                     anisotropy_factor=anisotropy_factor, opaque=opaque)
+                       atten: ti.f32, scatter_strength: ti.f32):
+        self.renderer.set_voxel_data(self.round_idx(idx + origin), atten=atten, scatter_strength=scatter_strength)
 
     def set_floor(self, height, color):
         self.renderer.floor_height[None] = height
@@ -189,23 +185,22 @@ class Scene:
         self.renderer.scatter_strength.from_numpy(scatter_field)
 
     #### Anisotropy factor ####
-    @property
-    def anisotropy_factor(self) -> np.ndarray:
-        return self.renderer.anisotropy_factor.to_numpy()
+    # @property
+    # def anisotropy_factor(self) -> np.ndarray:
+    #     return self.renderer.anisotropy_factor.to_numpy()
     
-    @anisotropy_factor.setter
-    def anisotropy_factor(self, aniso_field: ti.types.ndarray()):
-        self.renderer.anisotropy_factor.from_numpy(aniso_field)
+    # @anisotropy_factor.setter
+    # def anisotropy_factor(self, aniso_field: ti.types.ndarray()):
+    #     self.renderer.anisotropy_factor.from_numpy(aniso_field)
     
-    #### Opaque ####
-    @property
-    def opaque(self) -> np.ndarray:
-        return self.renderer.opaque.to_numpy()
+    # #### Opaque ####
+    # @property
+    # def opaque(self) -> np.ndarray:
+    #     return self.renderer.opaque.to_numpy()
     
-    @opaque.setter
-    def opaque(self, opaque_field: ti.types.ndarray()):
-        self.renderer.opaque.from_numpy(opaque_field)
-
+    # @opaque.setter
+    # def opaque(self, opaque_field: ti.types.ndarray()):
+    #     self.renderer.opaque.from_numpy(opaque_field)
 
     #### Truncate outside the surface of objects ####
     def truncate_outside_surface(self, gradient_threshold: float = 0.05):
@@ -226,9 +221,9 @@ class Scene:
         temp_grad[outside_mask, :] = 0
         self.gradient = temp_grad
 
-    def apply_filter(self, config: dict):
-        sigma = config["Gaus Sigma"]
-        radius = config["Gaus Radius"]
+    def apply_filter(self, proc_config: dict):
+        sigma = proc_config["Gauss Sigma"]
+        radius = proc_config["Gauss Radius"]
         
         self.ior = gaussian_filter(self.ior, sigma=sigma, radius=radius)
         self.attenuation = gaussian_filter(self.attenuation, sigma=sigma, radius=radius)

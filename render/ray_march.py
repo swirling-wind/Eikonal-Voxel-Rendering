@@ -10,8 +10,10 @@ use_directional_light = True
 
 @ti.data_oriented
 class Renderer:
-    def __init__(self, dx: float, image_res: tuple[int, int], up: tuple, voxel_edges: float, exposure: float=3.0, 
-                 hdr_size: tuple[int, int]=(4000, 2000), hdr_name: str='[med]wooden_floor_room_4k.hdr'):
+    def __init__(self, 
+                 hdr_res: tuple[int, int], hdr_name: str,
+                 dx: float, image_res: tuple[int, int],                 
+                 up: tuple, exposure: float=3.0):
         self.image_res = image_res
         self.aspect_ratio = image_res[0] / image_res[1]
         self.vignette_strength = 0.9
@@ -35,8 +37,6 @@ class Renderer:
         
         self.atten = ti.field(dtype=ti.f32)
         self.scatter_strength = ti.field(dtype=ti.f32)
-        self.anisotropy_factor = ti.field(dtype=ti.f32)
-        self.opaque = ti.field(dtype=ti.i8)
 
         # Viewing ray
         self.light_direction = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -65,7 +65,7 @@ class Renderer:
 
         # HDR map
         self.hdr_img = ti.Vector.field(3, dtype=ti.f32)
-        self.hdr_img_size = hdr_size
+        self.hdr_img_size = hdr_res
 
         ti.root.dense(ti.ij, image_res).place(self.color_buffer)
         ti.root.dense(ti.ij, self.hdr_img_size).place(self.hdr_img)
@@ -75,13 +75,12 @@ class Renderer:
                                                 self.ior,
 
                                                 self.grad,
+
                                                 self.irrad,
                                                 self.loc_dir,
 
                                                 self.atten,
                                                 self.scatter_strength,
-                                                self.anisotropy_factor,
-                                                self.opaque,
                                                 offset=voxel_grid_offset)
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
@@ -96,11 +95,7 @@ class Renderer:
         self.atten.fill(0.0)
         self.scatter_strength.fill(0.0)
 
-        # hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
-        # hdr_image = ti.tools.imread('assets/Tokyo_BigSight_3k.hdr').astype('float32')
-        # hdr_image = ti.tools.imread('assets/wooden_frame_room.hdr').astype('float32')
         hdr_image = ti.tools.imread("assets/" + hdr_name).astype('float32')
-
         self.hdr_img.from_numpy(hdr_image / 255)
         self.hdr_process(self.exposure, 2.2)
 
@@ -155,8 +150,6 @@ class Renderer:
     def pos_inside_grid(self, pos: tm.vec3) -> bool:
         return pos.min() >= -1.0 and pos.max() < 1.0 - self.voxel_dx
 
-
-    
 
     @ti.func
     def ipos_inside_particle_grid(self, ipos: tm.vec3) -> bool:
@@ -250,23 +243,25 @@ class Renderer:
 
             for _cur_step in range(MAX_MARCHING_STEPS):
                 inv_pos = pos * self.voxel_inv_dx # voxel_inv_dx is 1 / dx, equal to 64
-                gradient = trilinear_interp(self.grad, inv_pos)
-                loc_dir = trilinear_interp(self.loc_dir, inv_pos)
-                
-                voxelIrrad = trilinear_interp(self.irrad, inv_pos)
-                voxelAtt = trilinear_interp(self.atten, inv_pos)
-                scatterStrength = trilinear_interp(self.scatter_strength, inv_pos)
+
+                gradient = trilinear_interp(self.grad, inv_pos)     # 3D vector
+
+                voxelIrrad = trilinear_interp(self.irrad, inv_pos)  # 1D scalar
+                loc_dir = trilinear_interp(self.loc_dir, inv_pos)   # 3D vector
+
+                voxelAtt = trilinear_interp(self.atten, inv_pos)    # 1D scalar
+                scatterStrength = trilinear_interp(self.scatter_strength, inv_pos) # 1D scalar
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += voxelAtt * 2.0 # * step_size * self.voxel_inv_dx
+                A += voxelAtt # * step_size * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term 
-                ANISOTROPY_FACTOR = 0.7 # Higher value means more anisotropic scattering
+                ANISOTROPY_FACTOR = 0.1 # Higher value means more anisotropic scattering
                 ANISOTROPY_FACTOR_SQUARED = ANISOTROPY_FACTOR**2
                 ft = 1 - 2 * ANISOTROPY_FACTOR * tm.dot(loc_dir, tm.normalize(d)) + ANISOTROPY_FACTOR_SQUARED
-                Is = tm.vec3(voxelIrrad / 255.0 / 2.5) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
+                Is = tm.vec3(voxelIrrad / 255.0 / 32.0) * 0.5 * (1 - ANISOTROPY_FACTOR_SQUARED) / tm.pow(ft, 1.5)
 
                 # --------------------------------------
                 # Compute new direction and refraction index
@@ -289,29 +284,32 @@ class Renderer:
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
                     
-                    # Phong reflection model
-                    view_dir = -tm.normalize(d)
-                    light_dir = self.light_direction[None]
-                    normal = -tm.normalize(gradient)
-                    reflect_dir = tm.reflect(-light_dir, normal)
-                    Ir += tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
+                    # # Phong reflection model
+                    # view_dir = -tm.normalize(d)
+                    # light_dir = self.light_direction[None]
+                    # normal = -tm.normalize(gradient)
+                    # reflect_dir = tm.reflect(-light_dir, normal)
+                    # Ir += tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
 
                     # BRDF reflection model
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
                     reflect_pos = pos
+                    reflectionColor = tm.vec3(0.0)
 
                     # Check if the reflection ray intersects the floor plane and add the caustics
                     intersect_pos = self.intersect_floor(reflect_pos, reflect_dir)
-                    reflectionColor = tm.vec3(0.0)
                     # if the reflection ray intersects the floor plane, set the reflection color to the floor color and its irradiance
                     if intersect_pos[1] < 1.0 and self.pos_inside_particle_grid(intersect_pos):
-                        reflectionColor = self.floor_color[None] + tm.vec3(voxelIrrad / 255.0) * 9.0
+                        # print(u, v, "\tintersect_pos: ", intersect_pos)
+                        floor_irrad = trilinear_interp(self.irrad, intersect_pos * self.voxel_inv_dx)
+                        reflectionColor = self.floor_color[None] + tm.vec3(floor_irrad / 255.0)
                     else:  # else if not intersected, set the reflection color to the sky color
                         reflectionColor = self.sky_color(reflect_dir)
+
+                    Ir += reflectionColor
                     # VOXELREFLECTIONDATA_RGB = tm.vec3(1.0)
                     # VOXELREFLECTIONDATA_A = 0.8
-                    Ir += reflectionColor # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
-
+                     # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
                 else:
                     R = 0.0
                 if tm.length(gradient) < 0.001:
@@ -319,7 +317,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                Ic = scatterStrength * Is + Ir * R * 2.0
+                Ic = scatterStrength * Is + Ir * R
                 I += Ic * tm.exp(-A) * oldT
 
                 #  --------------------------------------
@@ -335,12 +333,12 @@ class Renderer:
             if hit_floor: # hit the floor (add floor color and floor position's irradiance)
                 floor_irrad = trilinear_interp(self.irrad, floor_inv_pos)
                 floor_irrad_vec = tm.vec3(floor_irrad / 255.0)
-                contrib = I + (self.floor_color[None] + floor_irrad_vec * 5.0) * tm.exp(-A)
+                contrib = I + (self.floor_color[None] + floor_irrad_vec) * tm.exp(-A)
             else: # enter the bounding box and finally hit the background
                 contrib = I + self.sky_color(d) * tm.exp(-A)
 
         else: # directly hit the background without entering the bounding box
-            contrib = self.sky_color(d) # self.background_color[None]
+            contrib = self.sky_color(d)
         
         self.color_buffer[u, v] += contrib
 
@@ -404,12 +402,9 @@ class Renderer:
         self.ior[idx] = ior
 
     @ti.func
-    def set_voxel_data(self, idx, atten: ti.f32, scatter_strength: ti.f32, 
-                       anisotropy_factor: ti.f32, opaque: ti.i8):
+    def set_voxel_data(self, idx, atten: ti.f32, scatter_strength: ti.f32):
         self.atten[idx] = atten
         self.scatter_strength[idx] = scatter_strength
-        self.anisotropy_factor[idx] = anisotropy_factor
-        self.opaque[idx] = ti.cast(opaque, ti.i8)
 
     @staticmethod
     @ti.func
