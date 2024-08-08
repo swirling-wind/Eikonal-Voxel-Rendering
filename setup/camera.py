@@ -95,8 +95,8 @@ class RotateCamera:
         self._camera_pos = np.array((0.0, 0.0, 4.0))
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
-        # self._last_mouse_pos = None
         self._world_up = np.array((0.0, 1.0, 0.0))
+        self._pitch_limit = np.radians(2)
 
     def update_camera(self):
         res = self._update_by_wasd()
@@ -126,10 +126,21 @@ class RotateCamera:
         return pressed
 
     def _rotate_camera(self, axis, angle):
-        rot_mat = self._rotation_matrix(axis, angle)
+        if axis is self._world_up:
+            # Rotate around the lookat point on left-right axis
+            rot_mat = self._rotation_matrix(axis, angle)
+        else:
+            tgtdir = self.target_dir
+            cos_angle = np.dot(tgtdir, self._world_up)
+            cos_limit = np.cos(self._pitch_limit)
+            if (angle > 0 and cos_angle <= -cos_limit) or (angle < 0 and cos_angle >= cos_limit):
+            # if (angle > 0 and self._camera_pos[1] >= 3) or \
+            #    (angle < 0 and self._camera_pos[1] <= -3):
+                return
+            rot_mat = self._rotation_matrix(axis, angle)      
+
         cam_pos = self._camera_pos - self._lookat_pos
         cam_pos = np.dot(rot_mat, cam_pos)
-
         self._camera_pos = cam_pos + self._lookat_pos
         self._up = np.dot(rot_mat, self._up)
 

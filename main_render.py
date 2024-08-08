@@ -31,7 +31,7 @@ PROC_CFG = {
     "Gauss Sigma": 4.0,
     "Gauss Radius": 2,
 
-    "Grad Threshold": 0.01,
+    "Grad Threshold": 0.0,
 }
 
 plotter = Plotter(SCENE_CFG)
@@ -40,4 +40,4 @@ scene = setup_voxel_scene(SCENE_CFG)
 scene.apply_filter(PROC_CFG)
 scene.gradient = compute_ior_gradient(scene.ior)
 scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, SCENE_CFG, plotter=plotter)
-scene.rt_render(translate_mode=True)
+scene.rt_render(free_mode=False)

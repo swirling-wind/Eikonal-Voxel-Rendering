@@ -75,11 +75,10 @@ class Scene:
             render_res_list.append(transposed_img)
         return render_res_list
 
-    def rt_render(self, translate_mode: bool = True):
+    def rt_render(self, free_mode: bool = True):
         torch.cuda.empty_cache()
         
-        if translate_mode:
-            print(HELP_MSG_TRANSLATE)
+        if free_mode:
             self.window = ti.ui.Window("Ray marching (Translate mode)",
                                    SCREEN_RES,
                                    vsync=True)

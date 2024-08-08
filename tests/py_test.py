@@ -1,8 +1,6 @@
-def self_add(dict):
-    dict['x'] += 1
+import numpy as np
 
-config = {
-    'x': 1
-}
-self_add(config)
-print(config['x']) 
+pitch_limit = np.radians(1)
+
+print(np.cos(pitch_limit))
+print(np.cos(np.pi - pitch_limit))
