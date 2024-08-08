@@ -10,7 +10,8 @@ use_directional_light = True
 
 @ti.data_oriented
 class Renderer:
-    def __init__(self, dx: float, image_res: tuple[int, int], up: tuple, voxel_edges: float, exposure: float=3.0):
+    def __init__(self, dx: float, image_res: tuple[int, int], up: tuple, voxel_edges: float, exposure: float=3.0, 
+                 hdr_size: tuple[int, int]=(4000, 2000), hdr_name: str='[med]wooden_floor_room_4k.hdr'):
         self.image_res = image_res
         self.aspect_ratio = image_res[0] / image_res[1]
         self.vignette_strength = 0.9
@@ -47,7 +48,7 @@ class Renderer:
         # self.cast_voxel_index = ti.Vector.field(3, ti.i32, shape=())
 
         # Scene settings
-        self.voxel_edges = voxel_edges
+        # self.voxel_edges = voxel_edges
         self.exposure = exposure
         self.camera_pos = ti.Vector.field(3, dtype=ti.f32, shape=())
         self.look_at = ti.Vector.field(3, dtype=ti.f32, shape=())
@@ -64,7 +65,7 @@ class Renderer:
 
         # HDR map
         self.hdr_img = ti.Vector.field(3, dtype=ti.f32)
-        self.hdr_img_size = (2000, 1000)
+        self.hdr_img_size = hdr_size
 
         ti.root.dense(ti.ij, image_res).place(self.color_buffer)
         ti.root.dense(ti.ij, self.hdr_img_size).place(self.hdr_img)
@@ -85,7 +86,7 @@ class Renderer:
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
         self.set_up(*up)
-        self.set_fov(0.6) # 0.23
+        self.set_fov(0.5) # 0.23
 
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
@@ -97,7 +98,8 @@ class Renderer:
 
         # hdr_image = ti.tools.imread('assets/limpopo_golf_course_3k.hdr').astype('float32')
         # hdr_image = ti.tools.imread('assets/Tokyo_BigSight_3k.hdr').astype('float32')
-        hdr_image = ti.tools.imread('assets/wooden_frame_room.hdr').astype('float32')
+        # hdr_image = ti.tools.imread('assets/wooden_frame_room.hdr').astype('float32')
+        hdr_image = ti.tools.imread("assets/" + hdr_name).astype('float32')
 
         self.hdr_img.from_numpy(hdr_image / 255)
         self.hdr_process(self.exposure, 2.2)

@@ -186,10 +186,8 @@ class RotateCamera:
 
 class Scene:
     def __init__(self, voxel_edges=0.06, exposure=3.0):        
-        self.renderer = Renderer(dx=VOXEL_DX,
-                                 image_res=SCREEN_RES,
-                                 up=UP_DIR,
-                                 voxel_edges=voxel_edges,
+        self.renderer = Renderer(dx=VOXEL_DX, image_res=SCREEN_RES,
+                                 up=UP_DIR, voxel_edges=voxel_edges,
                                  exposure=exposure)
         
     @staticmethod
