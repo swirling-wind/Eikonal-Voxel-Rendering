@@ -85,7 +85,7 @@ class Renderer:
 
         self._rendered_image = ti.Vector.field(3, float, image_res)
         self.set_up(*up)
-        self.set_fov(0.6) # 0.23
+        self.set_fov(0.8) # 0.23
 
         self.floor_height[None] = 0
         self.floor_color[None] = (1, 1, 1)
