@@ -138,9 +138,11 @@ def get_irrad_loc_dir(scene: Scene, scene_config: dict, plotter: Plotter, gaussi
     to_load_save = scene_config["Load Save"]
     sampler_multiplier = scene_config["Sampler Num"]
     NUM_XYZ = scene_config["NUM XYZ"]
+
+    irrad_loc_dir_path = get_irrad_loc_dir_path(scene_config)
     
-    if to_load_save and irrad_loc_dir_save_exists(sampler_multiplier):
-        raw_irradiance, local_diretion = load_irrad_loc_dir(sampler_multiplier)    
+    if to_load_save and irrad_loc_dir_save_exists(irrad_loc_dir_path):
+        raw_irradiance, local_diretion = load_irrad_loc_dir(irrad_loc_dir_path)    
     else:
         print("Running simulation")
         step_size = 0.3 * (NUM_XYZ[1] / 100)
@@ -153,7 +155,7 @@ def get_irrad_loc_dir(scene: Scene, scene_config: dict, plotter: Plotter, gaussi
                                                         initial_wavefront_pos, initial_wavefront_dir, plotter, 
                                                         num_steps, step_size, num_show_images)
         if to_load_save:
-            save_irrad_loc_dir(raw_irradiance, local_diretion, sampler_multiplier)
+            save_irrad_loc_dir(raw_irradiance, local_diretion, irrad_loc_dir_path)
 
     raw_irradiance = remove_under_floor(raw_irradiance, floor_height=plotter.floor_height)
     raw_irradiance = ndimage.gaussian_filter(raw_irradiance, sigma=gaussian_sigma, radius=1)
