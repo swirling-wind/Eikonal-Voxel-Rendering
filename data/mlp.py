@@ -3,11 +3,12 @@ import torch.nn as nn
 import numpy as np
 from simulation.simulator import DEVICE
 from simulation.simulate_utils import normalize_by_max
+from setup.scene_utils import get_floor_height
 import os
 
-class IrradianceNet(nn.Module):
+class MLP(nn.Module):
     def __init__(self):
-        super(IrradianceNet, self).__init__()
+        super(MLP, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(3, 128),
             nn.ReLU(),
@@ -24,16 +25,21 @@ class IrradianceNet(nn.Module):
     def forward(self, x):
         return self.model(x).squeeze()
     
-class MLP:
-    def __init__(self, irradiance: np.ndarray, floor_height: int, num_xyz: tuple[int, int, int], sampler_multiplier: int, num_epoches=50, load_model_file=True, val_ratio=0.1):
+class MLPFitter:
+    def __init__(self, irradiance: np.ndarray, scene_config: dict,
+                 num_epoches=50, load_model_file=True, val_ratio=0.1):
         self.irradiance = irradiance
-        self.floor_height = floor_height
-        self.num_xyz = num_xyz
+
+        self.scene_name = scene_config["Name"]
+        self.floor_height = get_floor_height(scene_config["NUM XYZ"][1], scene_config["Floor Ratio"])
+        self.num_xyz = scene_config["NUM XYZ"]
+        self.sampler_multiplier = scene_config["Sampler Num"]
+
         self.val_ratio = val_ratio
         self.train_inputs, self.val_inputs, self.train_targets, self.val_targets = self._prepare_data()
-        self.model = IrradianceNet().to(DEVICE)
+        self.model = MLP().to(DEVICE)
 
-        model_path = os.path.join(os.getcwd(), "data", "saves", f"MLP(Irrad)({sampler_multiplier}-samplers)({num_epoches}-epoches).pt")
+        model_path = os.path.join(os.getcwd(), "data", "saves", f"MLP({self.scene_name})({self.sampler_multiplier}-samplers)({num_epoches}-epoches).pt")
         if load_model_file == False or (not os.path.exists(model_path)):
             if not os.path.exists(model_path):
                 print("[ Not found ] model file \"{}\" does not exist. Start training the model...".format(model_path.split("\\")[-1]))

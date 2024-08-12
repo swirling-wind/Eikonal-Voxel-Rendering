@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 import numpy as np
 from simulation.simulator import DEVICE, normalize_by_max
+from setup.scene_utils import get_floor_height
 import os
 
 class SineLayer(nn.Module):
@@ -128,11 +129,12 @@ class ImageFitting(Dataset):
         return self.coords, self.pixels
     
 class SirenFitter:
-    def __init__(self, input_arr: np.ndarray, floor_height: int, sampler_multiplier: int,
+    def __init__(self, input_arr: np.ndarray, scene_config: dict,
                  hidden_features: int = 256, hidden_layers: int = 3, omega: int = 20):
-        self.floor_height = floor_height
-        self.sample_multiplier = sampler_multiplier
-        self.input_arr = input_arr[:, floor_height:, :]
+        self.scene_name = scene_config["Name"]
+        self.floor_height = get_floor_height(scene_config["NUM XYZ"][1], scene_config["Floor Ratio"])
+        self.sample_multiplier = scene_config["Sampler Num"]
+        self.input_arr = input_arr[:, self.floor_height:, :]
         self.cropped_shape = self.input_arr.shape
         self.omega = omega
         self.siren = Siren(in_features=3, out_features=1, 
@@ -141,7 +143,7 @@ class SirenFitter:
                            first_omega_0=omega, hidden_omega_0=omega)
     
     def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 3, show_epoch_interval: int = 5):
-        model_path = os.path.join(os.getcwd(), "data", "saves", f"SIREN(Irrad)({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega} omega).pt")
+        model_path = os.path.join(os.getcwd(), "data", "saves", f"SIREN({self.scene_name})({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega}-omega).pt")
         if load_file == False or (not os.path.exists(model_path)):     
             if not os.path.exists(model_path):
                 print("[ Not found ] SIREN model file \"{}\" does not exist. Start training the model...".format(model_path.split("\\")[-1]))
