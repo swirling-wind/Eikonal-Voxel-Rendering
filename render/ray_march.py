@@ -227,7 +227,7 @@ class Renderer:
         if inter:            
             pos = near_pos # Ray start from intersection point inside the bounding box
   
-            MAX_MARCHING_STEPS = 200
+            MAX_MARCHING_STEPS = 240
 
             I = tm.vec3(0.0)
             Is = tm.vec3(0.0)
@@ -283,7 +283,7 @@ class Renderer:
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
                     
-                    # # Phong reflection model
+                    # # Phong reflection model [NOT COMPATIBLE WITH THE FORMATION OF REFLeCTION MODEL]
                     # view_dir = -tm.normalize(d)
                     # light_dir = self.light_direction[None]
                     # normal = -tm.normalize(gradient)
@@ -319,7 +319,24 @@ class Renderer:
                 SCATTER_FACTOR = 0.6
                 REFLECTION_FACTOR = 2.0
                 Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
-                I += Ic * tm.exp(-A) * oldT
+                remaining = tm.exp(-A) * oldT
+                I += Ic * remaining
+ 
+                # --------------------------------------
+                # Russian Roulette [NO PERFORMANCE IMPROVEMENT]
+
+                # A_THRESHOLD = 2.0
+                # T_THRESHOLD = 0.15
+                # if A > A_THRESHOLD or T < T_THRESHOLD:
+                #     # the probability of continuation is based on the absorption and transmittance
+                #     q = tm.clamp(remaining, 0.1, 1.0)
+                #     if ti.random() > q:
+                #         break
+                #     else:
+                #         # adjust the intensity and transmittance to ensure the integral is correct
+                #         I /= q
+                #         T /= q
+
 
                 #  --------------------------------------
                 # check if we are not outside of the volume
