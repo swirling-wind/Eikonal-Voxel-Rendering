@@ -88,7 +88,7 @@ def init_debug_voxel():
 def setup_voxel_scene(scene_config: dict) -> Scene:
     global scene
 
-    NUM_XYZ = scene_config['NUM XYZ']
+    NUM_XYZ = scene_config['Num XYZ']
     num_x, num_y, num_z = NUM_XYZ
     floor_ratio_val = scene_config['Floor Ratio']
     load_scene = scene_config["Name"]
@@ -96,7 +96,7 @@ def setup_voxel_scene(scene_config: dict) -> Scene:
     floor_height = get_floor_height(num_y, floor_ratio_val)
     print("Floor Ratio:", floor_ratio_val, ", Floor Height:", floor_height)
     
-    scene = Scene(scene_config["HDR Res"], scene_config["HDR Name"], exposure=1.0)
+    scene = Scene(scene_config["HDR Res"], scene_config["HDR Name"], scene_config["Screen Res"], exposure=1.0)
     scene.set_directional_light((0, 1, 0), 0.2, (1, 1, 1))
     scene.set_background_color((0.05, 0.05, 0.4))
     scene.set_floor(height=floor_ratio_val, color=tm.vec3(0.2, 0.01, 0.01))
@@ -109,9 +109,9 @@ def setup_voxel_scene(scene_config: dict) -> Scene:
         init_bunny(bunny_field, floor_ratio_val, num_x, num_y, num_z)
     # elif load_scene == 'footed_glass':
     #     init_footed_glass(40)
-    elif load_scene == 'stemmed_glass':
-        stemmed_glass_voxel = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
-        stemmed_glass_field = setup_fields(stemmed_glass_voxel, NUM_XYZ)
-        init_stemmed_glass(stemmed_glass_field, floor_ratio_val, num_x, num_y, num_z)
+    # elif load_scene == 'stemmed_glass':
+    #     stemmed_glass_voxel = load_and_voxelize_mesh("./assets/wine_glass.obj", NUM_XYZ, 0.040, need_rotate=True)
+    #     stemmed_glass_field = setup_fields(stemmed_glass_voxel, NUM_XYZ)
+    #     init_stemmed_glass(stemmed_glass_field, floor_ratio_val, num_x, num_y, num_z)
     
     return scene

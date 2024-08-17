@@ -10,7 +10,7 @@ import numpy as np
 ti.init(arch=ti.gpu)
 
 SCENE_CFG = {
-    # Optional Names: "geometry", "bunny", "footed_glass", "stemmed_glass"
+    # Optional Names: "geometry" ## Temporarily not implemented and not needed: "bunny", "footed_glass", "stemmed_glass"
     "Name": "geometry", 
      
     # "HDR Res": (4000, 2000), 

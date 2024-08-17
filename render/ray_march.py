@@ -253,7 +253,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += voxelAtt / 1.5 # * step_size * self.voxel_inv_dx
+                A += voxelAtt / 2.0 # * step_size * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term 
@@ -265,8 +265,8 @@ class Renderer:
                 # --------------------------------------
                 # Compute new direction and refraction index
                 oldPos = pos
-                d += step_size * gradient
-                pos += step_size * d / n
+                d += step_size * gradient / n
+                pos += step_size * d / tm.pow(n, 2)
                 n += tm.dot(gradient, pos - oldPos) * self.voxel_inv_dx
 
                 # --------------------------------------
@@ -316,7 +316,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                SCATTER_FACTOR = 0.6
+                SCATTER_FACTOR = 0.2
                 REFLECTION_FACTOR = 2.0
                 Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 remaining = tm.exp(-A) * oldT

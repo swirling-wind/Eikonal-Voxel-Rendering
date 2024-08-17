@@ -137,7 +137,7 @@ def get_irrad_loc_dir(scene: Scene, scene_config: dict, plotter: Plotter, gaussi
 
     to_load_save = scene_config["Load Save"]
     sampler_multiplier = scene_config["Sampler Num"]
-    NUM_XYZ = scene_config["NUM XYZ"]
+    NUM_XYZ = scene_config["Num XYZ"]
 
     irrad_loc_dir_path = get_irrad_loc_dir_path(scene_config)
     

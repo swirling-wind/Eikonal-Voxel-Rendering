@@ -11,7 +11,7 @@ from render.ray_march import Renderer
 from .camera import RotateCamera, TranslateCamera
 
 VOXEL_DX = 1 / 64
-SCREEN_RES = (1600, 900)
+# SCREEN_RES = (1600, 900)
 UP_DIR = (0, 1, 0)
 HELP_MSG_TRANSLATE = '''
 ====================================================
@@ -24,8 +24,9 @@ MAT_LAMBERTIAN = 1
 MAT_LIGHT = 2
 
 class Scene:
-    def __init__(self, hdr_res: tuple, hdr_name: str, exposure=3.0):        
-        self.renderer = Renderer(hdr_res, hdr_name, VOXEL_DX, SCREEN_RES, UP_DIR, exposure)
+    def __init__(self, hdr_res: tuple[int, int], hdr_name: str, screen_res: tuple[int, int], exposure=3.0):  
+        self.screen_res = screen_res      
+        self.renderer = Renderer(hdr_res, hdr_name, VOXEL_DX, self.screen_res, UP_DIR, exposure)
 
     @staticmethod
     @ti.func
@@ -80,14 +81,14 @@ class Scene:
         
         if free_mode:
             self.window = ti.ui.Window("Ray marching (Translate mode)",
-                                   SCREEN_RES,
+                                   self.screen_res,
                                    vsync=True)
         
             self.camera = TranslateCamera(self.window, up=UP_DIR)
         
         else:
             self.window = ti.ui.Window("Ray marching (Rotate mode)",
-                                   SCREEN_RES,
+                                   self.screen_res,
                                    vsync=True)
         
             self.camera = RotateCamera(self.window, up=UP_DIR)

@@ -132,7 +132,7 @@ class SirenFitter:
     def __init__(self, input_arr: np.ndarray, scene_config: dict,
                  hidden_features: int = 256, hidden_layers: int = 3, omega: int = 20):
         self.scene_name = scene_config["Name"]
-        self.floor_height = get_floor_height(scene_config["NUM XYZ"][1], scene_config["Floor Ratio"])
+        self.floor_height = get_floor_height(scene_config["Num XYZ"][1], scene_config["Floor Ratio"])
         self.sample_multiplier = scene_config["Sampler Num"]
         self.input_arr = input_arr[:, self.floor_height:, :]
         self.cropped_shape = self.input_arr.shape

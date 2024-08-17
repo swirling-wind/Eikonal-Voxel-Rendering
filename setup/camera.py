@@ -3,10 +3,12 @@ import taichi as ti
 
 from common.math_utils import np_normalize, np_rotate_matrix
 
+INITIAL_POS = (0.0, 0.0, 3.0)
+
 class TranslateCamera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.0, 0.0, 4.0))
+        self._camera_pos = np.array(INITIAL_POS)
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._last_mouse_pos = None
@@ -92,7 +94,7 @@ class TranslateCamera:
 class RotateCamera:
     def __init__(self, window, up):
         self._window = window
-        self._camera_pos = np.array((0.0, 0.0, 4.0))
+        self._camera_pos = np.array(INITIAL_POS)
         self._lookat_pos = np.array((0.0, 0.0, 0.0))
         self._up = np_normalize(np.array(up))
         self._world_up = np.array((0.0, 1.0, 0.0))
@@ -173,3 +175,7 @@ class RotateCamera:
             return np.array([-1.0, 0.0, 0.0])
         return np.cross(self._up, tgtdir)
 
+def normalize_camera_pos(cam_pos: tuple | np.ndarray, distance=3.0) -> np.ndarray:
+    cam_pos = np.array(cam_pos)
+    cam_pos = cam_pos / np.linalg.norm(cam_pos) * distance
+    return cam_pos

@@ -31,8 +31,8 @@ class MLPFitter:
         self.irradiance = irradiance
 
         self.scene_name = scene_config["Name"]
-        self.floor_height = get_floor_height(scene_config["NUM XYZ"][1], scene_config["Floor Ratio"])
-        self.num_xyz = scene_config["NUM XYZ"]
+        self.floor_height = get_floor_height(scene_config["Num XYZ"][1], scene_config["Floor Ratio"])
+        self.num_xyz = scene_config["Num XYZ"]
         self.sampler_multiplier = scene_config["Sampler Num"]
 
         self.val_ratio = val_ratio
