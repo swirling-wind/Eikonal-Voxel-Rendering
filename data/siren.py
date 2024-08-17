@@ -143,7 +143,7 @@ class SirenFitter:
                            first_omega_0=omega, hidden_omega_0=omega)
     
     def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 3, show_epoch_interval: int = 5):
-        model_path = os.path.join(os.getcwd(), "data", "saves", f"SIREN({self.scene_name})({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega}-omega).pt")
+        model_path = os.path.join(os.getcwd(), "data", "siren_saves", f"SIREN({self.scene_name})({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega}-omega).pt")
         if load_file == False or (not os.path.exists(model_path)):     
             if not os.path.exists(model_path):
                 print("[ Not found ] SIREN model file \"{}\" does not exist. Start training the model...".format(model_path.split("\\")[-1]))

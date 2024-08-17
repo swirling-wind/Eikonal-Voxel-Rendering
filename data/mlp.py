@@ -39,7 +39,7 @@ class MLPFitter:
         self.train_inputs, self.val_inputs, self.train_targets, self.val_targets = self._prepare_data()
         self.model = MLP().to(DEVICE)
 
-        model_path = os.path.join(os.getcwd(), "data", "saves", f"MLP({self.scene_name})({self.sampler_multiplier}-samplers)({num_epoches}-epoches).pt")
+        model_path = os.path.join(os.getcwd(), "data", "mlp_saves", f"MLP({self.scene_name})({self.sampler_multiplier}-samplers)({num_epoches}-epoches).pt")
         if load_model_file == False or (not os.path.exists(model_path)):
             if not os.path.exists(model_path):
                 print("[ Not found ] model file \"{}\" does not exist. Start training the model...".format(model_path.split("\\")[-1]))

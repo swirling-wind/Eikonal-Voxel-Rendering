@@ -3,7 +3,7 @@ import numpy as np
 
 def get_irrad_loc_dir_path(scene_config: dict) -> str:
     file_name = f"NP({scene_config['Name']})({scene_config['Sampler Num']}-samplers).npz"
-    grid_path = os.path.join(os.getcwd(), "data", "saves", file_name)
+    grid_path = os.path.join(os.getcwd(), "data", "np_saves", file_name)
     return grid_path
 
 def save_irrad_loc_dir(irrad: np.ndarray, loc_dir: np.ndarray, file_path: str):
