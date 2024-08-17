@@ -377,16 +377,22 @@ class Renderer:
 
     @ti.kernel
     def recompute_bbox(self):
-        for d in ti.static(range(3)):
-            self.bbox[0][d] = 1e9
-            self.bbox[1][d] = -1e9
-        for I in ti.grouped(self.voxel_material):
-            if self.voxel_material[I] != 0:
-                for d in ti.static(range(3)):
-                    ti.atomic_min(self.bbox[0][d], (I[d] - 1) * self.voxel_dx)
-                    ti.atomic_max(self.bbox[1][d], (I[d] + 2) * self.voxel_dx)
+        # Compute the minimum bounding box of the scene
+        # for d in ti.static(range(3)):
+        #     self.bbox[0][d] = 1e9
+        #     self.bbox[1][d] = -1e9
+        # for I in ti.grouped(self.voxel_material):
+        #     if self.voxel_material[I] != 0:
+        #         for d in ti.static(range(3)):
+        #             ti.atomic_min(self.bbox[0][d], (I[d] - 1) * self.voxel_dx)
+        #             ti.atomic_max(self.bbox[1][d], (I[d] + 2) * self.voxel_dx)
         
+        # Compute the largest bounding box of the scene
+        self.bbox[0] = tm.vec3(-1.0 + self.voxel_dx)
+        self.bbox[1] = tm.vec3(1.0 - 2* self.voxel_dx)
+
         self.bbox[0][1] = self.floor_height[None] - self.voxel_dx
+
 
     def reset_framebuffer(self):
         self.current_spp = 0
