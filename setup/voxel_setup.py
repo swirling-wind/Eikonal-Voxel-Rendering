@@ -47,14 +47,9 @@ def add_bunny(bunny_field, origin: tm.vec3, mat: ti.i8,
 ############### Init different scenes ###############
 @ti.kernel
 def init_geometry(floor_ratio: float):
-    LARGE_R, CUBE_LEN = 50, 35
-    add_ball(LARGE_R, tm.vec3(0, floor_ratio * 64 / 2 + 26, 0), 1, RED, GLASS_IOR)
-    add_cube(CUBE_LEN, tm.vec3(-50, floor_ratio * 64 + 1, -46), 1, BLUE, GLASS_IOR)
-
-@ti.kernel
-def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int):
-    # coordinate z must be minus, because of the potential index out of range of the voxel field
-    add_stemmed_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z)
+    LARGE_R, CUBE_LEN = 50, 32
+    add_ball(LARGE_R, tm.vec3(7, floor_ratio * 64 / 2 + 26, 7), 1, RED, GLASS_IOR)
+    add_cube(CUBE_LEN, tm.vec3(-60, floor_ratio * 64 + 1, -60), 1, BLUE, GLASS_IOR)
 
 @ti.kernel
 def init_bunny(bunny_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int): # type: ignore
@@ -70,6 +65,12 @@ def init_bunny(bunny_field: ti.template(), floor_ratio: float, num_x: int, num_y
 #             scene.set_voxel(tm.vec3(i, k, j), tm.vec3(0, 0, 0), 1, color, ior=GLASS_IOR)
 #             scene.set_voxel_data(tm.vec3(i, k, j), tm.vec3(0, 0, 0), atten=0.03, scatter_strength=0.5,
 #                                  anisotropy_factor=0.0, opaque=0)
+
+# @ti.kernel
+# def init_stemmed_glass(glass_field: ti.template(), floor_ratio: float, num_x: int, num_y: int, num_z: int):
+#     # coordinate z must be minus, because of the potential index out of range of the voxel field
+#     add_stemmed_glass(glass_field, tm.vec3(-16, floor_ratio * 64 + 2, -110), 1, WHITE, GLASS_IOR, num_x, num_y, num_z)
+
 
 # @ti.kernel
 # def init_ceiling_light(num_x: int, num_y: int, num_z: int):
@@ -104,7 +105,7 @@ def setup_voxel_scene(scene_config: dict) -> Scene:
     if load_scene == 'geometry':
         init_geometry(floor_ratio_val)
     elif load_scene == 'bunny':
-        bunny_voxel = load_and_voxelize_mesh("./assets/bun_zipper_res3.ply", NUM_XYZ, 0.0016)
+        bunny_voxel = load_and_voxelize_mesh("./assets/bun_zipper_res3.ply", NUM_XYZ, 0.0015)
         bunny_field = setup_fields(bunny_voxel, NUM_XYZ)
         init_bunny(bunny_field, floor_ratio_val, num_x, num_y, num_z)
     # elif load_scene == 'footed_glass':

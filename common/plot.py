@@ -5,7 +5,7 @@ from matplotlib.cm import ScalarMappable
 
 from setup.scene_utils import get_floor_height
 
-PLOT_STRIDE_LENGTH = 709  # 439# 293 # 
+PLOT_STRIDE_LENGTH = 439 # 439# 293 # 709 
 FIG_SIZE = (5, 5)
 
 def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

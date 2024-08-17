@@ -142,7 +142,7 @@ class SirenFitter:
                            outermost_linear=True,
                            first_omega_0=omega, hidden_omega_0=omega)
     
-    def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 3, show_epoch_interval: int = 5):
+    def fit(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, load_file: bool = True, patience: int = 3, show_epoch_interval: int = 2):
         model_path = os.path.join(os.getcwd(), "data", "siren_saves", f"SIREN({self.scene_name})({self.sample_multiplier}-samplers)({total_epochs}-epoches)({self.omega}-omega).pt")
         if load_file == False or (not os.path.exists(model_path)):     
             if not os.path.exists(model_path):
@@ -154,13 +154,15 @@ class SirenFitter:
             self.siren.to(DEVICE)
             print("[ Loaded ] SIREN model from \"{}\"".format(model_path.split("\\")[-1]))
     
-    def train(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, patience: int = 5, show_epoch_interval: int = 5):           
+    def train(self, total_epochs: int = 20, batch_size: int = 20000, lr: float = 5e-4, patience: int = 5, show_epoch_interval: int = 2):           
         torch.cuda.empty_cache()
         irrad_data = VoxelFitting(self.input_arr, sidelength=self.input_arr.shape)
         dataloader = DataLoader(irrad_data, batch_size, sampler=RandomSampler(irrad_data),
                                 pin_memory=True)
 
         self.siren.to(DEVICE)
+
+        criterion = nn.MSELoss()
         optim = torch.optim.Adam(lr=lr, params=self.siren.parameters())
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, mode='min', factor=0.2, patience=patience)
 
@@ -172,7 +174,7 @@ class SirenFitter:
                 model_output = self.siren(model_input)
                 model_output = model_output.view(ground_truth.shape)
 
-                loss = ((model_output - ground_truth) ** 2).mean()
+                loss = criterion(model_output, ground_truth)
 
                 # epsilon = 1e-4  # Add to log to prevent NaN
                 # - Use log loss [NOT WORK. INFER RESULT IS LIKE HEAT WAVE]                
