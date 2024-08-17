@@ -1,5 +1,4 @@
 from setup.voxel_setup import setup_voxel_scene
-from setup.camera import normalize_camera_pos
 from common.plot import Plotter
 from simulation.simulator import get_irrad_loc_dir, compute_ior_gradient
 
@@ -46,6 +45,3 @@ scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, SCENE_CFG, plo
 
 
 scene.rt_render(free_mode=False)
-
-# camera_pos_list = [normalize_camera_pos((1,2,0))]
-# res = scene.offline_render(camera_pos_list)

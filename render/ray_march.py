@@ -301,7 +301,7 @@ class Renderer:
                     if intersect_pos[1] < 1.0 and self.pos_inside_particle_grid(intersect_pos):
                         # print(u, v, "\tintersect_pos: ", intersect_pos)
                         floor_irrad = trilinear_interp(self.irrad, intersect_pos * self.voxel_inv_dx)
-                        reflectionColor = self.floor_color[None] + tm.vec3(floor_irrad / 255.0) * 3.0
+                        reflectionColor = self.floor_color[None] + tm.vec3(floor_irrad / 255.0) * 2.0
                     else:  # else if not intersected, set the reflection color to the sky color
                         reflectionColor = self.sky_color(reflect_dir)
 
@@ -316,7 +316,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                SCATTER_FACTOR = 0.2
+                SCATTER_FACTOR = 0.4
                 REFLECTION_FACTOR = 2.0
                 Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 remaining = tm.exp(-A) * oldT

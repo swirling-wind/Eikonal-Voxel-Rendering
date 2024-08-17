@@ -175,7 +175,4 @@ class RotateCamera:
             return np.array([-1.0, 0.0, 0.0])
         return np.cross(self._up, tgtdir)
 
-def normalize_camera_pos(cam_pos: tuple | np.ndarray, distance=2.5) -> np.ndarray:
-    cam_pos = np.array(cam_pos)
-    cam_pos = cam_pos / np.linalg.norm(cam_pos) * distance
-    return cam_pos
+
