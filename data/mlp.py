@@ -27,7 +27,7 @@ class MLP(nn.Module):
     
 class MLPFitter:
     def __init__(self, irradiance: np.ndarray, scene_config: dict,
-                 num_epoches=50, load_model_file=True, val_ratio=0.1):
+                 num_epoches=500, batch_size=20000, load_model_file=True, val_ratio=0.1):
         self.irradiance = irradiance
 
         self.scene_name = scene_config["Name"]
@@ -43,7 +43,7 @@ class MLPFitter:
         if load_model_file == False or (not os.path.exists(model_path)):
             if not os.path.exists(model_path):
                 print("[ Not found ] model file \"{}\" does not exist. Start training the model...".format(model_path.split("\\")[-1]))
-            self.train(num_epoches)
+            self.train(num_epoches, batch_size)
             torch.save(self.model.state_dict(), model_path)
         else:
             self.model.load_state_dict(torch.load(model_path))
@@ -82,7 +82,7 @@ class MLPFitter:
 
         return train_inputs, val_inputs, train_targets, val_targets
 
-    def train(self, num_epochs=100, batch_size=1024):
+    def train(self, num_epochs, batch_size):
         torch.cuda.empty_cache()
         print("Device:", DEVICE)
         
@@ -119,13 +119,15 @@ class MLPFitter:
                     print("Current learning rate:", prev_lr)
         torch.cuda.empty_cache()
 
-    def predict(self, pad: bool=False, batch_size: int = 2048) -> np.ndarray:
+    def predict(self, pad: bool=False, batch_size: int = 4096) -> np.ndarray:
         NUM_X, NUM_Y, NUM_Z = self.num_xyz
         x = np.arange(NUM_X)
         z = np.arange(NUM_Z)
         X, Z = np.meshgrid(x, z)
         
         predictions = []
+
+        self.model.eval()
         with torch.no_grad():
             for y in range(NUM_Y - self.floor_height):
                 coords = np.stack((X, np.full_like(X, y), Z), axis=-1).reshape(-1, 3)
