@@ -215,8 +215,11 @@ class SirenFitter:
         
         return infer_output.cpu().numpy()
 
-def siren_post_process(siren_res: np.ndarray, gamma = 0.6) -> np.ndarray:
+def siren_post_process(siren_res: np.ndarray, gamma: float|None = 0.6) -> np.ndarray:
     normalized_siren_res = normalize_by_max(siren_res)
-    corrected_siren_res = ((normalized_siren_res / 255.0) ** (1.0 / gamma)) * 255.0
+    if gamma is not None:
+        corrected_siren_res = ((normalized_siren_res / 255.0) ** (1.0 / gamma)) * 255.0
+    else:
+        corrected_siren_res = normalized_siren_res
     return corrected_siren_res
 

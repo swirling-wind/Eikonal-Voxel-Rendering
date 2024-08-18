@@ -1,5 +1,6 @@
 from setup.voxel_setup import setup_voxel_scene
 from common.plot import Plotter
+from common.figure import *
 from simulation.simulator import get_irrad_loc_dir, compute_ior_gradient
 
 import taichi as ti
@@ -11,20 +12,22 @@ ti.init(arch=ti.gpu)
 
 SCENE_CFG = {
     # Optional Names: "geometry", "bunny", "footed_glass", "stemmed_glass"
-    "Name": "geometry", 
+    "Name": "bunny", 
      
-    # "HDR Res": (4000, 2000), 
-    # "HDR Name": "Dark_night_4k.hdr",
+    "HDR Res": (4000, 2000), 
+    "HDR Name": "Light_wooden_floor_room_4k.hdr",
+    "Cam Pos": [(-2, 1, 4), (0, 0.1, 1.5), (1, 2, 1)],
 
-    "HDR Res": (2000, 1000),
-    "HDR Name": "Light_wooden_frame_room_2k.hdr",
+    # "HDR Res": (2000, 1000),
+    # "HDR Name": "Light_wooden_frame_room_2k.hdr",
+    # "Cam Pos": [(2, 0.5, 2), (-2, -1, 2), (-2, -1, 0)],
 
     "Screen Res": (1280, 960),
     
     "Num XYZ": (128, 128, 128),
     'Floor Ratio': -0.95,
 
-    "Sampler Num": 6,
+    "Sampler Num": 8,
 
     "Load Save": True,
 }
@@ -45,3 +48,13 @@ scene.irradiance, scene.local_diretion = get_irrad_loc_dir(scene, SCENE_CFG, plo
 
 
 scene.rt_render(free_mode=False)
+
+
+#### Offline render ####
+# camera_pos_list = [normalize_camera_pos(pos) for pos in CAM_POS_LIST]
+
+# import time
+# start = time.time()
+# _imgs = scene.offline_render(camera_pos_list)
+# end = time.time()
+# print(f"Time: {end - start:.2f}s")

@@ -106,11 +106,11 @@ class Octree:
             return 0
         return sys.getsizeof(node) + sum(self._calculate_memory_usage(child) for child in node.children)
     
-    def visualize(self, plotter: Plotter, num_slices=8, z_start=30, z_end=120):
+    def visualize(self, plotter: Plotter, title: str, num_slices=8, z_start=30, z_end=120):
         grid = self.init_empty_grid()
         assert self.root is not None, "Octree is empty. Maybe you forgot to construct it?"
         self.fill_grid(self.root, grid, 0, 0, 0, self.grid_size)
-        plotter.plot_irradiance_slices(grid, threshold=self.threshold, num_slices=num_slices, z_start=z_start, z_end=z_end)
+        plotter.plot_irradiance_slices(grid, title, threshold=self.threshold, num_slices=num_slices, z_start=z_start, z_end=z_end)
 
     def init_empty_grid(self) -> np.ndarray:
         return np.zeros((self.grid_size, self.grid_size, self.grid_size))

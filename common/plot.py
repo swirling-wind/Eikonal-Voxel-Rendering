@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
-
+import os
 from setup.scene_utils import get_floor_height
 
 PLOT_STRIDE_LENGTH = 439 # 439# 293 # 709 
@@ -16,6 +16,8 @@ def floor_surface(num_x: int, num_y: int, floor_height: int) -> tuple[np.ndarray
 class Plotter:
     def __init__(self, scene_config: dict):
         self.sampler_multiplier = scene_config['Sampler Num']
+        self.scene_name = scene_config['Name']
+        self.hdr_name = scene_config['HDR Name']
         self.floor_height = get_floor_height(scene_config['Num XYZ'][1], scene_config['Floor Ratio'])
 
     def plot_gradient(self, grad_xyz: np.ndarray, threshold: float = 0.1, alpha: float = 0.05):
@@ -88,7 +90,7 @@ class Plotter:
         fig.colorbar(mappable, ax=ax, shrink=0.5, aspect=5)  # Add colorbar
         plt.show()
 
-    def plot_irradiance_slices(self, radiometric_grid: np.ndarray, threshold=3.0, num_slices=4, z_start=None, z_end=None):  
+    def plot_irradiance_slices(self, radiometric_grid: np.ndarray, title: str, threshold=3.0, num_slices=4, z_start=None, z_end=None):  
         if z_start is None:
             z_start = 0
         if z_end is None:
@@ -116,6 +118,9 @@ class Plotter:
             ax.axis('off')
 
         plt.tight_layout()
+
+        fig_path = os.path.join(os.getcwd(), 'images', self.hdr_name, self.scene_name, title)
+        plt.savefig(fig_path + '.png', dpi=300)
         plt.show()
         
 

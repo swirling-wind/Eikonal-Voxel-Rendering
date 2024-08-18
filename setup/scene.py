@@ -89,7 +89,7 @@ class Scene:
         else:
             self.window = ti.ui.Window("Ray marching (Rotate mode)",
                                    self.screen_res,
-                                   vsync=True)
+                                   vsync=False)
         
             self.camera = RotateCamera(self.window, up=UP_DIR)
 
