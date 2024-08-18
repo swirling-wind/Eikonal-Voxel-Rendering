@@ -14,10 +14,12 @@ def save_offline_render(scene: Scene, scene_config: dict, filename: str, to_plot
     img_list = scene.offline_render(camera_pos_list)
     for idx, img in enumerate(img_list):
         img = np.clip(img, 0, 1)
-        pil_image = Image.fromarray((img * 255).astype(np.uint8))
 
-        image_path = os.path.join(os.getcwd(), "images", scene_config["HDR Name"], scene_config["Name"], filename)
-        pil_image.save(image_path + f"_{idx}.png")
+        if scene_config["Save Fig"]:
+            
+            pil_image = Image.fromarray((img * 255).astype(np.uint8))
+            image_path = os.path.join(os.getcwd(), "images", scene_config["HDR Name"], scene_config["Name"], filename)
+            pil_image.save(image_path + f"_{idx}.png")
 
         if to_plot:
             plt.imshow(img)

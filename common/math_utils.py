@@ -43,31 +43,31 @@ def out_dir(n: tm.vec3):
     return ax * (ti.cos(phi) * u + ti.sin(phi) * v) + ay * n
 
 
-# @ti.func
-# def ray_aabb_intersection(box_min: tm.vec3, box_max: tm.vec3, 
-#                           o: tm.vec3, d: tm.vec3):
-#     intersect = 1
+@ti.func
+def ray_aabb_intersection(box_min: tm.vec3, box_max: tm.vec3, 
+                          o: tm.vec3, d: tm.vec3):
+    intersect = 1
 
-#     near_int = -inf
-#     far_int = inf
+    near_int = -inf
+    far_int = inf
 
-#     for i in ti.static(range(3)):
-#         if d[i] == 0: # when ray parallel to plane
-#             if o[i] < box_min[i] or o[i] > box_max[i]:
-#                 intersect = 0
-#         else:
-#             i1 = (box_min[i] - o[i]) / d[i]
-#             i2 = (box_max[i] - o[i]) / d[i]
+    for i in ti.static(range(3)):
+        if d[i] == 0: # when ray parallel to plane
+            if o[i] < box_min[i] or o[i] > box_max[i]:
+                intersect = 0
+        else:
+            i1 = (box_min[i] - o[i]) / d[i]
+            i2 = (box_max[i] - o[i]) / d[i]
 
-#             new_far_int = ti.max(i1, i2)
-#             new_near_int = ti.min(i1, i2)
+            new_far_int = ti.max(i1, i2)
+            new_near_int = ti.min(i1, i2)
 
-#             far_int = ti.min(new_far_int, far_int)
-#             near_int = ti.max(new_near_int, near_int)
+            far_int = ti.min(new_far_int, far_int)
+            near_int = ti.max(new_near_int, near_int)
 
-#     if near_int > far_int:
-#         intersect = 0
-#     return intersect, near_int, far_int
+    if near_int > far_int:
+        intersect = 0
+    return intersect, near_int, far_int
 
 @ti.func
 def ray_aabb_intersection_point(box_min: tm.vec3, box_max: tm.vec3,

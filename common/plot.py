@@ -20,6 +20,8 @@ class Plotter:
         self.hdr_name = scene_config['HDR Name']
         self.floor_height = get_floor_height(scene_config['Num XYZ'][1], scene_config['Floor Ratio'])
 
+        self.save_fig = scene_config["Save Fig"]
+
     def plot_gradient(self, grad_xyz: np.ndarray, threshold: float = 0.1, alpha: float = 0.05):
         fig = plt.figure(figsize=FIG_SIZE)
         ax = fig.add_subplot(111, projection='3d')
@@ -119,8 +121,9 @@ class Plotter:
 
         plt.tight_layout()
 
-        fig_path = os.path.join(os.getcwd(), 'images', self.hdr_name, self.scene_name, title)
-        plt.savefig(fig_path + '.png', dpi=300)
+        if self.save_fig:
+            fig_path = os.path.join(os.getcwd(), 'images', self.hdr_name, self.scene_name, title)
+            plt.savefig(fig_path + '.png', dpi=300)
         plt.show()
         
 
