@@ -124,7 +124,7 @@ def process_all_images(base_path, file_types, num_threshold, grad_threshold):
     return all_metrics
 
 def print_csv(all_metrics):
-    headers = ['Index', 'Type', 'Num_Mean', 'Num_Max', 'Grad_Mean', 'Grad_Max', 'MSE', 'PSNR', 'SSIM']
+    headers = ['Index', 'Type', 'Num Diff Mean', 'Num Diff Max', 'Grad Diff Mean', 'Grad Diff Max', 'MSE', 'PSNR', 'SSIM']
     print(','.join(headers))
     
     for index, metrics in all_metrics.items():
@@ -142,7 +142,7 @@ def print_csv(all_metrics):
             ]
             print(','.join(row))
 
-base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
+base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 15 
 grad_threshold = 15
