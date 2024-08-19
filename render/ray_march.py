@@ -275,7 +275,7 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.07 and not boundary:
+                if tm.length(gradient) > 0.06 and not boundary:
                     FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.6
 
@@ -314,7 +314,7 @@ class Renderer:
                 else:
                     R = 0.0
 
-                if voxel_ior < 1.1 and tm.length(gradient) < 0.001:
+                if voxel_ior < 1.495 and tm.length(gradient) < 0.001:
                     boundary = False
 
                 #  --------------------------------------
