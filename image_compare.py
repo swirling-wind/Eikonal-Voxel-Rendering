@@ -142,7 +142,7 @@ def print_csv(all_metrics):
             ]
             print(','.join(row))
 
-base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
+base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 15 
 grad_threshold = 15
