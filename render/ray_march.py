@@ -227,7 +227,10 @@ class Renderer:
         if inter:            
             pos = near_pos # Ray start from intersection point inside the bounding box
   
-            MAX_MARCHING_STEPS = 300
+            STEP_FACTOR = 0.75
+
+            MAX_MARCHING_STEPS = int(300 / STEP_FACTOR)
+            step_size = self.voxel_dx * STEP_FACTOR
 
             I = tm.vec3(0.0)
             Is = tm.vec3(0.0)
@@ -237,7 +240,6 @@ class Renderer:
             T = 1.0 # transmittance (e.g: T.rgb)
             R = 0.0 # reflection (e.g: R.rgb)
 
-            step_size = self.voxel_dx
             n = 1.0
 
             for _cur_step in range(MAX_MARCHING_STEPS):
@@ -255,7 +257,7 @@ class Renderer:
 
                 # --------------------------------------
                 # Compute Attenuation factor
-                A += voxelAtt / 2.0 # * step_size * self.voxel_inv_dx
+                A += voxelAtt / 2.5 # * step_size * self.voxel_inv_dx
 
                 # --------------------------------------
                 # Compute scattering term 
@@ -275,7 +277,7 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.06 and not boundary:
+                if tm.length(gradient) > 0.05 and not boundary:
                     FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.6
 
@@ -319,9 +321,9 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                SCATTER_FACTOR = 0.4
-                REFLECTION_FACTOR = 2.0
-                Ic =  Ir * R * REFLECTION_FACTOR + scatterStrength * Is * SCATTER_FACTOR # +
+                SCATTER_FACTOR = 0.2
+                REFLECTION_FACTOR = 1.6
+                Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 remaining = tm.exp(-A) * oldT
                 I += Ic * remaining
  

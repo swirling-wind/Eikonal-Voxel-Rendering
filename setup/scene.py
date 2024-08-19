@@ -67,7 +67,7 @@ class Scene:
             self.renderer.reset_framebuffer()
             self.renderer.recompute_bbox()
 
-            for _cur_spp in range(120):
+            for _cur_spp in range(150):
                 self.renderer.ray_marching()
                 self.renderer.current_spp += 1
             
