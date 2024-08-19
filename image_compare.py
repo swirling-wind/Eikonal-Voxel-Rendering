@@ -7,7 +7,6 @@ from skimage.metrics import structural_similarity as ssim
 def load_images(img_path, origin_path):
     img = cv2.imread(img_path)
     origin_img = cv2.imread(origin_path)
-    # 将BGR转换为RGB颜色空间
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     origin_img = cv2.cvtColor(origin_img, cv2.COLOR_BGR2RGB)
     return img, origin_img
@@ -39,7 +38,6 @@ def calculate_psnr(mse, max_pixel=255.0):
     return 20 * np.log10(max_pixel / np.sqrt(mse))
 
 def calculate_ssim(img1, img2):
-    # 使用channel_axis参数代替multichannel
     return ssim(img1, img2, channel_axis=2)
 
 def save_difference_image(diff, title, save_path, vmin, vmax):
@@ -111,7 +109,6 @@ def process_index(base_path, file_types, index, num_threshold, grad_threshold):
 def process_all_images(base_path, file_types, num_threshold, grad_threshold):
     all_metrics = {}
     
-    # 获取所有索引
     indices = set()
     for file_type in file_types:
         for filename in os.listdir(base_path):
@@ -119,7 +116,6 @@ def process_all_images(base_path, file_types, num_threshold, grad_threshold):
                 index = filename[len(file_type)+1:-4]
                 indices.add(index)
     
-    # 对每个索引进行处理
     for index in indices:
         metrics = process_index(base_path, file_types, index, num_threshold, grad_threshold)
         if metrics:
@@ -146,7 +142,6 @@ def print_csv(all_metrics):
             ]
             print(','.join(row))
 
-# 使用示例
 base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 15 
@@ -154,12 +149,3 @@ grad_threshold = 15
 
 all_metrics = process_all_images(base_path, file_types, num_threshold, grad_threshold)
 print_csv(all_metrics)
-
-
-
-# base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
-# file_types = ['MLP', 'Siren', 'Octree']
-# num_threshold = 15  # 数值差异阈值，根据需要调整
-# grad_threshold = 15  # 梯度差异阈值，根据需要调整
-# process_all_images(base_path, file_types, num_threshold, grad_threshold)
-

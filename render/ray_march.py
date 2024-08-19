@@ -251,6 +251,8 @@ class Renderer:
                 voxelAtt = trilinear_interp(self.atten, inv_pos)    # 1D scalar
                 scatterStrength = trilinear_interp(self.scatter_strength, inv_pos) # 1D scalar
 
+                voxel_ior = trilinear_interp(self.ior, inv_pos)     # 1D scalar
+
                 # --------------------------------------
                 # Compute Attenuation factor
                 A += voxelAtt / 2.0 # * step_size * self.voxel_inv_dx
@@ -311,14 +313,15 @@ class Renderer:
                      # tm.mix(reflectionColor, VOXELREFLECTIONDATA_RGB * reflectionColor, VOXELREFLECTIONDATA_A)
                 else:
                     R = 0.0
-                if tm.length(gradient) < 0.001:
+
+                if voxel_ior < 1.1 and tm.length(gradient) < 0.001:
                     boundary = False
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
                 SCATTER_FACTOR = 0.4
                 REFLECTION_FACTOR = 2.0
-                Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
+                Ic =  Ir * R * REFLECTION_FACTOR + scatterStrength * Is * SCATTER_FACTOR # +
                 remaining = tm.exp(-A) * oldT
                 I += Ic * remaining
  
