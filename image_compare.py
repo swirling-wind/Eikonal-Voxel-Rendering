@@ -1,21 +1,22 @@
+import os
 import numpy as np
 import cv2
-import os
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from skimage.metrics import structural_similarity as ssim
 
-def load_images(image1_path, image2_path):
-    img1 = cv2.imread(image1_path)
-    img2 = cv2.imread(image2_path)
+def load_images(img_path, origin_path):
+    img = cv2.imread(img_path)
+    origin_img = cv2.imread(origin_path)
     # 将BGR转换为RGB颜色空间
-    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
-    img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
-    return img1, img2
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    origin_img = cv2.cvtColor(origin_img, cv2.COLOR_BGR2RGB)
+    return img, origin_img
 
-def calculate_numerical_difference(img1, img2):
-    return np.abs(img1.astype(np.float32) - img2.astype(np.float32)).mean(axis=2)
+def calculate_numerical_difference(img1, img2, threshold):
+    diff = np.abs(img1.astype(np.float32) - img2.astype(np.float32)).mean(axis=2)
+    return np.where(diff < threshold, 0, diff)
 
-def calculate_gradient_difference(img1, img2):
+def calculate_gradient_difference(img1, img2, threshold):
     gray1 = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
     gray2 = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
     sobelx1 = cv2.Sobel(gray1, cv2.CV_64F, 1, 0, ksize=3)
@@ -26,71 +27,136 @@ def calculate_gradient_difference(img1, img2):
     grad_diff_x = np.abs(sobelx1 - sobelx2)
     grad_diff_y = np.abs(sobely1 - sobely2)
     
-    return np.sqrt(grad_diff_x**2 + grad_diff_y**2)
+    grad_diff = np.sqrt(grad_diff_x**2 + grad_diff_y**2)
+    return np.where(grad_diff < threshold, 0, grad_diff)
 
-def calculate_divergence_difference(img1, img2):
-    gray1 = cv2.cvtColor(img1, cv2.COLOR_RGB2GRAY)
-    gray2 = cv2.cvtColor(img2, cv2.COLOR_RGB2GRAY)
-    laplacian1 = cv2.Laplacian(gray1, cv2.CV_64F)
-    laplacian2 = cv2.Laplacian(gray2, cv2.CV_64F)
-    return np.abs(laplacian1 - laplacian2)
+def calculate_mse(img1, img2):
+    return np.mean((img1 - img2) ** 2)
 
-def apply_threshold(diff, threshold):
-    return np.where(diff < threshold, 0, diff)
+def calculate_psnr(mse, max_pixel=255.0):
+    if mse == 0:
+        return float('inf')
+    return 20 * np.log10(max_pixel / np.sqrt(mse))
 
-def visualize_differences(img1, img2, num_diff, grad_diff, div_diff, thresholds):
-    num_diff_thresholded = apply_threshold(num_diff, thresholds['numerical'])
-    grad_diff_thresholded = apply_threshold(grad_diff, thresholds['gradient'])
-    div_diff_thresholded = apply_threshold(div_diff, thresholds['divergence'])
-    
-    fig, axs = plt.subplots(2, 3, figsize=(18, 12))
-    
-    axs[0, 0].imshow(img1)
-    axs[0, 0].set_title('Image 1')
-    axs[0, 1].imshow(img2)
-    axs[0, 1].set_title('Image 2')
-    
-    def add_colorbar(im, ax):
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        return fig.colorbar(im, cax=cax)
-    
-    im2 = axs[0, 2].imshow(num_diff_thresholded, cmap='hot')
-    axs[0, 2].set_title(f'Numerical Difference (threshold: {thresholds["numerical"]})')
-    add_colorbar(im2, axs[0, 2])
-    
-    im3 = axs[1, 0].imshow(grad_diff_thresholded, cmap='hot')
-    axs[1, 0].set_title(f'Gradient Difference (threshold: {thresholds["gradient"]})')
-    add_colorbar(im3, axs[1, 0])
-    
-    im4 = axs[1, 1].imshow(div_diff_thresholded, cmap='hot')
-    axs[1, 1].set_title(f'Divergence Difference (threshold: {thresholds["divergence"]})')
-    add_colorbar(im4, axs[1, 1])
-    
-    combined_diff = num_diff_thresholded + grad_diff_thresholded + div_diff_thresholded
-    im5 = axs[1, 2].imshow(combined_diff, cmap='hot')
-    axs[1, 2].set_title('Combined Difference (thresholded)')
-    add_colorbar(im5, axs[1, 2])
-    
+def calculate_ssim(img1, img2):
+    # 使用channel_axis参数代替multichannel
+    return ssim(img1, img2, channel_axis=2)
+
+def save_difference_image(diff, title, save_path, vmin, vmax):
+    plt.figure(figsize=(10, 8))
+    plt.imshow(diff, cmap='hot', vmin=vmin, vmax=vmax)
+    plt.colorbar()
+    plt.title(title)
+    plt.axis('off')
     plt.tight_layout()
-    plt.show()
+    plt.savefig(save_path)
+    plt.close()
 
-def compare_images(image1_path, image2_path, thresholds):
-    img1, img2 = load_images(image1_path, image2_path)
+def process_index(base_path, file_types, index, num_threshold, grad_threshold):
+    metrics = {file_type: {} for file_type in file_types}
+    num_diffs = {}
+    grad_diffs = {}
     
-    num_diff = calculate_numerical_difference(img1, img2)
-    grad_diff = calculate_gradient_difference(img1, img2)
-    div_diff = calculate_divergence_difference(img1, img2)
+    for file_type in file_types:
+        img_path = os.path.join(base_path, f'{file_type}_{index}.png')
+        origin_path = os.path.join(base_path, f'Origin_{index}.png')
+        
+        if not (os.path.exists(img_path) and os.path.exists(origin_path)):
+            print(f"Files for {file_type}_{index} not found.")
+            continue
+        
+        img, origin_img = load_images(img_path, origin_path)
+        
+        num_diff = calculate_numerical_difference(img, origin_img, num_threshold)
+        grad_diff = calculate_gradient_difference(img, origin_img, grad_threshold)
+        
+        num_diffs[file_type] = num_diff
+        grad_diffs[file_type] = grad_diff
+        
+        metrics[file_type]['num_mean'] = np.mean(num_diff)
+        metrics[file_type]['num_max'] = np.max(num_diff)
+        metrics[file_type]['grad_mean'] = np.mean(grad_diff)
+        metrics[file_type]['grad_max'] = np.max(grad_diff)
+        
+        mse = calculate_mse(img, origin_img)
+        metrics[file_type]['mse'] = mse
+        metrics[file_type]['psnr'] = calculate_psnr(mse)
+        metrics[file_type]['ssim'] = calculate_ssim(img, origin_img)
     
-    visualize_differences(img1, img2, num_diff, grad_diff, div_diff, thresholds)
-image1_path = os.path.join(os.getcwd(), "images", "Light_wooden_floor_room_4k.hdr", "bunny", "MLP_0.png")
-image2_path = os.path.join(os.getcwd(), "images", "Light_wooden_floor_room_4k.hdr", "bunny", "Origin_0.png")
-print(image1_path)
-print(image2_path)
-thresholds = {
-    'numerical': 10,  # 0-255 范围内的阈值
-    'gradient': 30,   # 根据图像特征调整
-    'divergence': 50 # 根据图像特征调整
-}
-compare_images(image1_path, image2_path, thresholds)
-# compare_images(image1_path, image2_path)
+    if not num_diffs or not grad_diffs:
+        return None
+    
+    num_min = min(np.min(diff) for diff in num_diffs.values())
+    num_max = max(np.max(diff) for diff in num_diffs.values())
+    grad_min = min(np.min(diff) for diff in grad_diffs.values())
+    grad_max = max(np.max(diff) for diff in grad_diffs.values())
+    
+    for file_type in file_types:
+        if file_type in num_diffs and file_type in grad_diffs:
+            save_difference_image(num_diffs[file_type], 
+                                  f'Numerical Difference ({file_type}, Index: {index}, Threshold: {num_threshold})', 
+                                  os.path.join(base_path, f'num_diff_{file_type}_{index}.png'),
+                                  num_min, num_max)
+            save_difference_image(grad_diffs[file_type], 
+                                  f'Gradient Difference ({file_type}, Index: {index}, Threshold: {grad_threshold})', 
+                                  os.path.join(base_path, f'grad_diff_{file_type}_{index}.png'),
+                                  grad_min, grad_max)
+    
+    print(f"Differences for index {index} have been calculated and saved.")
+    return metrics
+
+def process_all_images(base_path, file_types, num_threshold, grad_threshold):
+    all_metrics = {}
+    
+    # 获取所有索引
+    indices = set()
+    for file_type in file_types:
+        for filename in os.listdir(base_path):
+            if filename.startswith(f'{file_type}_') and filename.endswith('.png'):
+                index = filename[len(file_type)+1:-4]
+                indices.add(index)
+    
+    # 对每个索引进行处理
+    for index in indices:
+        metrics = process_index(base_path, file_types, index, num_threshold, grad_threshold)
+        if metrics:
+            all_metrics[index] = metrics
+    
+    return all_metrics
+
+def print_csv(all_metrics):
+    headers = ['Index', 'Type', 'Num_Mean', 'Num_Max', 'Grad_Mean', 'Grad_Max', 'MSE', 'PSNR', 'SSIM']
+    print(','.join(headers))
+    
+    for index, metrics in all_metrics.items():
+        for file_type, values in metrics.items():
+            row = [
+                index,
+                file_type,
+                f"{values['num_mean']:.4f}",
+                f"{values['num_max']:.4f}",
+                f"{values['grad_mean']:.4f}",
+                f"{values['grad_max']:.4f}",
+                f"{values['mse']:.4f}",
+                f"{values['psnr']:.4f}",
+                f"{values['ssim']:.4f}"
+            ]
+            print(','.join(row))
+
+# 使用示例
+base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
+file_types = ['MLP', 'Siren', 'Octree']
+num_threshold = 15 
+grad_threshold = 15
+
+all_metrics = process_all_images(base_path, file_types, num_threshold, grad_threshold)
+print_csv(all_metrics)
+
+
+
+# base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
+# file_types = ['MLP', 'Siren', 'Octree']
+# num_threshold = 15  # 数值差异阈值，根据需要调整
+# grad_threshold = 15  # 梯度差异阈值，根据需要调整
+# process_all_images(base_path, file_types, num_threshold, grad_threshold)
+
