@@ -43,13 +43,16 @@ def calculate_ssim(img1, img2):
     return ssim(img1, img2, channel_axis=2)
 
 def save_difference_image(diff, title, save_path, vmin, vmax):
-    plt.figure(figsize=(10, 8))
+    # plt.figure(figsize=(10, 8))
     plt.imshow(diff, cmap='hot', vmin=vmin, vmax=vmax)
-    plt.colorbar()
-    plt.title(title)
+    # plt.colorbar()
+    # plt.title(title)
     plt.axis('off')
     plt.tight_layout()
-    plt.savefig(save_path)
+    # plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, 
+    #         hspace = 0, wspace = 0)
+    # plt.margins(0,0)
+    plt.savefig(save_path, dpi=300, bbox_inches='tight', pad_inches=0, transparent=True)
     plt.close()
 
 def process_index(base_path, file_types, index, num_threshold, grad_threshold):
@@ -144,7 +147,7 @@ def print_csv(all_metrics):
             print(','.join(row))
 
 # 使用示例
-base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
+base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 15 
 grad_threshold = 15
