@@ -152,6 +152,28 @@ class MLPFitter:
             predictions = torch.nn.functional.pad(predictions, padding, mode='constant', value=0)
         
         return predictions.cpu().numpy()
+    
+    def query(self, coord: list[float]) -> float:
+        """
+        Query the MLP model with input coordinate and return irradiance prediction.
+        
+        Args:
+            coord (list[float]): [x, y, z] coordinate.
+            
+        Returns:
+            float: Predicted irradiance at the queried coordinate.
+        """
+        x, y, z = coord
+        y -= self.floor_height  # Convert y coordinate to match the training data
+        
+        coord = np.array([x, y, z]).reshape(1, -1)  # Reshape to (1, 3) # type: ignore
+        coord_tensor = torch.from_numpy(coord).float().to(DEVICE)
+        
+        self.model.eval()
+        with torch.no_grad():
+            pred = self.model(coord_tensor)
+        
+        return pred.item()
 
 def mlp_post_process(mlp_res: np.ndarray, gamma: float | None) -> np.ndarray:
     normalized_mlp_res = normalize_by_max(mlp_res)
