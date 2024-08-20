@@ -126,11 +126,11 @@ def process_index(base_path, file_types, index, num_threshold, grad_threshold, i
         if file_type in num_diffs and file_type in grad_magnitudes:
             save_difference_image(num_diffs[file_type], 
                                   f'Numerical Difference ({file_type}, Index: {index}, Threshold: {num_threshold})', 
-                                  os.path.join(base_path, f'numerical_diff_{file_type}_{index}.png'),
+                                  os.path.join(base_path, f'num_diff_{file_type}_{index}.png'),
                                   num_min, num_max)
             save_gradient_difference_image(grad_magnitudes[file_type], grad_directions[file_type],
                                            f'Gradient Difference ({file_type}, Index: {index}, Threshold: {grad_threshold})', 
-                                           os.path.join(base_path, f'gradient_diff_{file_type}_{index}.png'),
+                                           os.path.join(base_path, f'grad_diff_{file_type}_{index}.png'),
                                            intensity)
     
     print(f"Differences for index {index} have been calculated and saved.")
@@ -175,7 +175,7 @@ def print_csv(all_metrics):
             print(','.join(row))
 
 # 使用示例
-base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
+base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 10  # 数值差异阈值，根据需要调整
 grad_threshold = 15  # 梯度差异阈值，根据需要调整
