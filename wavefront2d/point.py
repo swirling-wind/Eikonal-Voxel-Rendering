@@ -36,8 +36,8 @@ def update_wavefront_points(pos: list[tuple], dir: list[tuple], IOR: np.ndarray,
 
     return new_pos, new_dir
 
-def simulate_wavefront_propagation_points(cur_IOR: np.ndarray, inital_wavefront_pos: list[tuple], initial_wavefront_dir: list[tuple], 
-                                   num_steps=200, delta_t=1.0) -> tuple[list[list[tuple]], list[list[tuple]]]:
+def simulate_wavefront_propagation_points(cur_IOR: np.ndarray, inital_wavefront_pos: list[tuple], initial_wavefront_dir: list[tuple],
+                                          num_steps, delta_t) -> tuple[list[list[tuple]], list[list[tuple]]]:
     wavefront_pos_list = [inital_wavefront_pos]
     wavefront_dir_list = [initial_wavefront_dir]
     cur_IOR_grad = compute_gradients(cur_IOR)
@@ -53,4 +53,22 @@ def compute_irradiance_points(wavefront_pos_list: list[list[tuple]], field_size:
         for x, y in pos_list:
             if 0 <= int(y) < field_size and 0 <= int(x) < field_size:
                 irradiance[int(y), int(x)] += 1
+    return irradiance
+
+def accumulate_points(cur_IOR: np.ndarray, inital_wavefront_pos: list[tuple], initial_wavefront_dir: list[tuple],
+                      num_steps, delta_t, field_size=128) -> np.ndarray:
+    irradiance = np.zeros((field_size, field_size))
+
+    prev_wavefront_pos = inital_wavefront_pos
+    prev_wavefront_dir = initial_wavefront_dir
+    cur_IOR_grad = compute_gradients(cur_IOR)
+    for _ in range(num_steps):
+        wavefront_positions, wavefront_directions = update_wavefront_points(prev_wavefront_pos, prev_wavefront_dir, cur_IOR, cur_IOR_grad, delta_t)
+           
+        for x, y in prev_wavefront_pos:
+            if 0 <= int(y) < field_size and 0 <= int(x) < field_size:
+                irradiance[int(y), int(x)] += 1
+
+        prev_wavefront_pos = wavefront_positions
+        prev_wavefront_dir = wavefront_directions
     return irradiance
