@@ -64,7 +64,7 @@ def accumulate_points(cur_IOR: np.ndarray, inital_wavefront_pos: list[tuple], in
     cur_IOR_grad = compute_gradients(cur_IOR)
     for _ in range(num_steps):
         wavefront_positions, wavefront_directions = update_wavefront_points(prev_wavefront_pos, prev_wavefront_dir, cur_IOR, cur_IOR_grad, delta_t)
-           
+
         for x, y in prev_wavefront_pos:
             if 0 <= int(y) < field_size and 0 <= int(x) < field_size:
                 irradiance[int(y), int(x)] += 1
@@ -72,3 +72,51 @@ def accumulate_points(cur_IOR: np.ndarray, inital_wavefront_pos: list[tuple], in
         prev_wavefront_pos = wavefront_positions
         prev_wavefront_dir = wavefront_directions
     return irradiance
+
+
+def monte_carlo_wavefront_simulation(
+    ior_field: np.ndarray,
+    initial_wavefront_positions: list[tuple[float, float]],
+    initial_wavefront_directions: list[tuple[float, float]],
+    num_steps: int,
+    delta_t: float,
+    num_simulations: int,
+    perturbation_std: float,
+    field_size: int
+) -> np.ndarray:
+    """
+    Perform Monte Carlo simulation of wavefront propagation with random perturbations.
+    
+    :param ior_field: Index of refraction field
+    :param initial_wavefront_positions: Initial positions of wavefront points
+    :param initial_wavefront_directions: Initial directions of wavefront points
+    :param num_steps: Number of steps in each simulation
+    :param delta_t: Time step
+    :param num_simulations: Number of Monte Carlo simulations
+    :param perturbation_std: Standard deviation of the perturbation
+    :param field_size: Size of the simulation field
+    :return: Accumulated irradiance field
+    """
+    accumulated_irradiance = np.zeros((field_size, field_size))
+
+    for _ in range(num_simulations):
+        # Apply random perturbations to initial positions
+        perturbed_positions = [
+            (x + np.random.normal(0, perturbation_std), 
+             y + np.random.normal(0, perturbation_std))
+            for x, y in initial_wavefront_positions
+        ]
+        
+        # Perform a single simulation with perturbed initial positions
+        irradiance = accumulate_points(
+            ior_field, perturbed_positions, initial_wavefront_directions, 
+            num_steps, delta_t, field_size
+        )
+        
+        # Accumulate the result
+        accumulated_irradiance += irradiance
+
+    # Normalize the accumulated irradiance
+    accumulated_irradiance /= num_simulations
+
+    return accumulated_irradiance
