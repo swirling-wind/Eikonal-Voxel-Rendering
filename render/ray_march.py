@@ -325,7 +325,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                SCATTER_FACTOR = 0.3 # 0#
+                SCATTER_FACTOR =  0.3 #0 #
                 REFLECTION_FACTOR = 1.6
                 Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 remaining = tm.exp(-A) * oldT
