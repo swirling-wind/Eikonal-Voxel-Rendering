@@ -7,7 +7,7 @@ import pickle
 
 from scipy.ndimage import gaussian_filter
 import scipy.ndimage as ndimage
-
+from common.mesh_loader import *
 
 def get_ior_field(field_type: str, field_size = 128) -> np.ndarray:
     height, width = field_size, field_size
@@ -53,6 +53,13 @@ def get_ior_field(field_type: str, field_size = 128) -> np.ndarray:
                 else:
                     steep_slope_ior_field[y, x] = 1.0
         return steep_slope_ior_field
+    
+    elif field_type == "bunny":
+        bunny_ior = load_and_project_mesh("./assets/bun_zipper_res3.ply", 1.5, (field_size, field_size), 0.0015)
+        bunny_ior = np.rot90(bunny_ior, 1)
+        bunny_ior = np.roll(bunny_ior, 15, axis=1)
+        return bunny_ior
+
 
     else:
         raise ValueError("Invalid field type")

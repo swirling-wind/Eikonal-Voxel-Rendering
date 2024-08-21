@@ -33,3 +33,41 @@ def load_and_voxelize_mesh(file_path: str, num_xyz: tuple[int, int, int],
     print("Loaded Voxel shape:", filled_voxels.shape, " from:", file_path)  
     print("Number of filled voxels:", np.sum(filled_voxels))
     return filled_voxels
+
+
+def load_and_project_mesh(file_path: str, ior: float, resolution: tuple[int, int], 
+                          voxel_size=0.005) -> np.ndarray:
+    """
+    Load a 3D mesh and project it onto the XY plane, creating a 2D numpy array.
+    
+    :param file_path: Path to the 3D mesh file
+    :param resolution: Tuple (width, height) for the output 2D array
+    :param voxel_size: Size of voxels for initial voxelization (smaller = higher resolution)
+    :return: 2D numpy array representing the projection
+    """
+    # Load the mesh
+    target_mesh = trimesh.load(file_path)
+    assert isinstance(target_mesh, trimesh.Trimesh), "Loaded object should be a Trimesh"
+    
+    # Convert to Open3D mesh
+    mesh = o3d.geometry.TriangleMesh()
+    mesh.vertices = o3d.utility.Vector3dVector(target_mesh.vertices)
+    mesh.triangles = o3d.utility.Vector3iVector(target_mesh.faces)
+    mesh.compute_vertex_normals()
+    
+    # Create voxel grid
+    voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(mesh, voxel_size)
+    
+    # Initialize the 2D projection array
+    projection = np.ones(resolution, dtype=np.float32)
+    
+    # Project voxels onto XY plane
+    for voxel in voxel_grid.get_voxels():
+        x, y, _ = voxel.grid_index
+        if 0 <= x < resolution[0] and 0 <= y < resolution[1]:
+            projection[x, y] = ior
+    
+    print("Projected shape:", projection.shape, " from:", file_path)
+    print("Number of filled pixels:", np.sum(projection))
+    
+    return projection
