@@ -24,9 +24,12 @@ def add_ball(r: ti.i32, origin: tm.vec3, mat: ti.i8,
 @ti.func
 def add_cube(side_len: int, left_bottom_corner: tm.vec3, mat: ti.i8, 
              color: tm.vec3, voxel_ior: float):
-    for i, j, k in ti.ndrange(side_len, side_len, side_len):
-        scene.set_voxel(tm.vec3(i, j, k), left_bottom_corner, mat, color, ior=voxel_ior)
-        scene.set_voxel_data(tm.vec3(i, j, k), left_bottom_corner, atten=ATTENUATION, scatter_strength=0.5)
+    # for i, j, k in ti.ndrange(side_len, side_len, side_len):
+    for i in ti.ndrange(side_len):
+        for j in ti.ndrange(side_len):
+            for k in ti.ndrange(side_len):
+                scene.set_voxel(tm.vec3(i, j, k), left_bottom_corner, mat, color, ior=voxel_ior)
+                scene.set_voxel_data(tm.vec3(i, j, k), left_bottom_corner, atten=ATTENUATION, scatter_strength=0.5)
 
 @ti.func
 def add_stemmed_glass(glass_field, origin: tm.vec3, mat: ti.i8, 

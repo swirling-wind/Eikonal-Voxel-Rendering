@@ -219,8 +219,6 @@ class Renderer:
 
         hit_floor = 0
         floor_inv_pos = cam_pos
-
-        boundary = False
         
         contrib = ti.Vector([0.0, 0.0, 0.0]) # each value range: [0,1]
 
@@ -241,6 +239,8 @@ class Renderer:
             R = 0.0 # reflection (e.g: R.rgb)
 
             n = 1.0
+
+            state_flag = 0
 
             for _cur_step in range(MAX_MARCHING_STEPS):
                 inv_pos = pos * self.voxel_inv_dx # voxel_inv_dx is 1 / dx, equal to 64
@@ -277,22 +277,27 @@ class Renderer:
                 # Compute Reflection Term
                 oldT = T
 
-                if tm.length(gradient) > 0.05 and not boundary:
+                new_inv_pos = pos * self.voxel_inv_dx
+                new_grad = trilinear_interp(self.grad, new_inv_pos)
+                new_ior = trilinear_interp(self.ior, new_inv_pos)     # 1D scalar
+
+                will_reflect = False
+                if state_flag ==0 and tm.length(gradient) > 0.02:
+                    state_flag = 1
+                    will_reflect = True
+
+                if state_flag == 1 and tm.length(new_grad) < 0.02 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - 0.002:
+                    state_flag = 2
+                    will_reflect = True
+
+                if will_reflect:
+                # if (tm.length(gradient) > 0.02 and not boundary) or (boundary and tm.length(new_grad) < 0.05 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior):
                     FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.6
-
-                    boundary = True
 
                     R = 1 / tm.pow(1 + ti.abs(tm.dot(tm.normalize(gradient), tm.normalize(d))), 2.0)
                     R = tm.mix(0.1, tm.min((tm.pow(R, 3) * VOXELAUX_A),  1.0), FRESNEL_FACTOR)
                     T = tm.mix(1, T * (1 - R), FRESNEL_FACTOR)
-                    
-                    # # Phong reflection model [NOT COMPATIBLE WITH THE FORMATION OF REFLeCTION MODEL]
-                    # view_dir = -tm.normalize(d)
-                    # light_dir = self.light_direction[None]
-                    # normal = -tm.normalize(gradient)
-                    # reflect_dir = tm.reflect(-light_dir, normal)
-                    # Ir += tm.pow(tm.max(tm.dot(view_dir, reflect_dir), 0.0), 3.0)
 
                     # BRDF reflection model
                     reflect_dir = tm.reflect(tm.normalize(d), tm.normalize(gradient))
@@ -316,8 +321,8 @@ class Renderer:
                 else:
                     R = 0.0
 
-                if voxel_ior < 1.495 and tm.length(gradient) < 0.001:
-                    boundary = False
+                if tm.length(gradient) < 0.001 and voxel_ior < 1.001:  # When ray re-enter the air
+                    state_flag = 0  # Reset the state flag to its original state
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral

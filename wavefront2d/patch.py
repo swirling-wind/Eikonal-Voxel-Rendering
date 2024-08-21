@@ -46,7 +46,7 @@ def init_wavefront_patches(initial_wavefront_positions: list[tuple], initial_wav
     return initial_wavefront_patches
 
 def update_wavefront_patches(patches: list[Patch], IOR: np.ndarray, IOR_grad: tuple[np.ndarray, np.ndarray], 
-                             delta_t: float, refine_threshold: float = 0.2, energy_threshold: float = 0.0005) -> list[Patch]:
+                             delta_t: float, refine_threshold: float = 0.2, energy_threshold: float = 0.0001) -> list[Patch]:
     new_patches = []
     grad_x_ior, grad_y_ior = IOR_grad
     
