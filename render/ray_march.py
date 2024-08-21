@@ -225,9 +225,9 @@ class Renderer:
         if inter:            
             pos = near_pos # Ray start from intersection point inside the bounding box
   
-            STEP_FACTOR = 0.75
+            STEP_FACTOR = 0.7
 
-            MAX_MARCHING_STEPS = int(300 / STEP_FACTOR)
+            MAX_MARCHING_STEPS = int(320 / STEP_FACTOR)
             step_size = self.voxel_dx * STEP_FACTOR
 
             I = tm.vec3(0.0)
@@ -282,16 +282,15 @@ class Renderer:
                 new_ior = trilinear_interp(self.ior, new_inv_pos)     # 1D scalar
 
                 will_reflect = False
-                if state_flag ==0 and tm.length(gradient) > 0.02:
+                if state_flag == 0 and tm.length(gradient) > 0.04:
                     state_flag = 1
                     will_reflect = True
 
-                if state_flag == 1 and tm.length(new_grad) < 0.02 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - 0.002:
+                if state_flag == 1 and tm.length(new_grad) < 0.04 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - 0.002: # - 0.002 geometry ## 0.007 bunny
                     state_flag = 2
                     will_reflect = True
 
                 if will_reflect:
-                # if (tm.length(gradient) > 0.02 and not boundary) or (boundary and tm.length(new_grad) < 0.05 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior):
                     FRESNEL_FACTOR = 0.5
                     VOXELAUX_A = 0.6
 
@@ -326,7 +325,7 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                SCATTER_FACTOR = 0 #0.3 #
+                SCATTER_FACTOR = 0.3 # 0#
                 REFLECTION_FACTOR = 1.6
                 Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 remaining = tm.exp(-A) * oldT
