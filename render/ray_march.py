@@ -286,7 +286,8 @@ class Renderer:
                     state_flag = 1
                     will_reflect = True
 
-                if state_flag == 1 and tm.length(new_grad) < 0.04 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - 0.007: # - 0.002 geometry ## 0.007 bunny
+                TRESHOLD = 0.002 #  0.002 geometry  #  0.007 bunny
+                if state_flag == 1 and tm.length(new_grad) < 0.04 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - TRESHOLD: 
                     state_flag = 2
                     will_reflect = True
 
@@ -325,8 +326,8 @@ class Renderer:
 
                 #  --------------------------------------
                 # Compute combined intensity per voxel and compute final integral
-                SCATTER_FACTOR =  0.3 #0 #
-                REFLECTION_FACTOR = 1.6
+                SCATTER_FACTOR = 0.3 # 0 # 
+                REFLECTION_FACTOR =  0 #1.6 #
                 Ic = scatterStrength * Is * SCATTER_FACTOR + Ir * R * REFLECTION_FACTOR
                 remaining = tm.exp(-A) * oldT
                 I += Ic * remaining

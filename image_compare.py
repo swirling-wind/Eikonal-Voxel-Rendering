@@ -47,11 +47,11 @@ def calculate_ssim(img1, img2):
 def save_difference_image(diff, title, save_path, vmin, vmax):
     plt.figure(figsize=(10, 8))
     plt.imshow(diff, cmap='hot', vmin=vmin, vmax=vmax)
-    plt.colorbar()
-    plt.title(title)
+    # plt.colorbar()
+    # plt.title(title)
     plt.axis('off')
     plt.tight_layout()
-    plt.savefig(save_path)
+    plt.savefig(save_path, dpi=300, bbox_inches='tight', pad_inches=0, transparent=True)
     plt.close()
 
 def save_gradient_difference_image(magnitude, direction, title, save_path, intensity=1.5):
@@ -62,7 +62,7 @@ def save_gradient_difference_image(magnitude, direction, title, save_path, inten
     
     # 调整饱和度和明度以加粗梯度差异
     saturation = np.ones_like(magnitude)
-    value = cv2.normalize(magnitude, None, 0, 1, cv2.NORM_MINMAX)
+    value = cv2.normalize(magnitude, None, 0, 1, cv2.NORM_MINMAX) # type: ignore
     
     # 应用强度因子
     value = np.clip(value * intensity, 0, 1)
