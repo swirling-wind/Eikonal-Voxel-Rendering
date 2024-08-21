@@ -46,7 +46,7 @@ def init_wavefront_patches(initial_wavefront_positions: list[tuple], initial_wav
     return initial_wavefront_patches
 
 def update_wavefront_patches(patches: list[Patch], IOR: np.ndarray, IOR_grad: tuple[np.ndarray, np.ndarray], 
-                             delta_t: float, refine_threshold: float = 0.2, energy_threshold: float = 0.0001) -> list[Patch]:
+                             delta_t: float, refine_threshold: float, energy_threshold: float = 0.0001) -> list[Patch]:
     new_patches = []
     grad_x_ior, grad_y_ior = IOR_grad
     
@@ -109,37 +109,38 @@ def update_wavefront_patches(patches: list[Patch], IOR: np.ndarray, IOR_grad: tu
 
     return new_patches
 
-def simulate_wavefront_propagation_patches(cur_IOR: np.ndarray, initial_wavefront_patches: list[Patch],
-                                           num_steps, delta_t) -> list[list[Patch]]:
-    wavefront_patch_list = [initial_wavefront_patches]
-    cur_IOR_grad = compute_gradients(cur_IOR)
-    for _ in range(num_steps):
-        new_patches = update_wavefront_patches(wavefront_patch_list[-1], cur_IOR, cur_IOR_grad, delta_t)
-        wavefront_patch_list.append(new_patches)
-    return wavefront_patch_list
+# def simulate_wavefront_propagation_patches(cur_IOR: np.ndarray, initial_wavefront_patches: list[Patch],
+#                                            num_steps, delta_t) -> list[list[Patch]]:
+#     wavefront_patch_list = [initial_wavefront_patches]
+#     cur_IOR_grad = compute_gradients(cur_IOR)
+#     for _ in range(num_steps):
+#         new_patches = update_wavefront_patches(wavefront_patch_list[-1], cur_IOR, cur_IOR_grad, delta_t)
+#         wavefront_patch_list.append(new_patches)
+#     return wavefront_patch_list
 
-def compute_irradiance_patches(wavefront_patch_list: list[list[Patch]], field_size: int) -> np.ndarray:
-    irradiance = np.zeros((field_size, field_size))
-    for patch_list in wavefront_patch_list:
-        for patch in patch_list:
-            mid_x, mid_y = patch.mid_pos()            
-            # Compute the voxel coordinates of the patch midpoint
-            voxel_x, voxel_y = int(mid_x), int(mid_y)            
-            # Check if the voxel coordinates are within the field boundaries
-            if 0 <= voxel_x < field_size and 0 <= voxel_y < field_size:
-                # Update the irradiance for the voxel containing the patch midpoint
-                irradiance[voxel_y, voxel_x] += patch.energy    
-    return irradiance
+# def compute_irradiance_patches(wavefront_patch_list: list[list[Patch]], field_size: int) -> np.ndarray:
+#     irradiance = np.zeros((field_size, field_size))
+#     for patch_list in wavefront_patch_list:
+#         for patch in patch_list:
+#             mid_x, mid_y = patch.mid_pos()            
+#             # Compute the voxel coordinates of the patch midpoint
+#             voxel_x, voxel_y = int(mid_x), int(mid_y)            
+#             # Check if the voxel coordinates are within the field boundaries
+#             if 0 <= voxel_x < field_size and 0 <= voxel_y < field_size:
+#                 # Update the irradiance for the voxel containing the patch midpoint
+#                 irradiance[voxel_y, voxel_x] += patch.energy    
+#     return irradiance
 
 def accumulate_patches(cur_IOR: np.ndarray, initial_wavefront_patches: list[Patch],
-                       num_steps, delta_t, field_size=128) -> np.ndarray:
+                       num_steps, delta_t, 
+                       refine_threshold = 0.2, field_size=128) -> np.ndarray:
 
     cur_IOR_grad = compute_gradients(cur_IOR)
 
     prev_patch_list = initial_wavefront_patches
     irradiance = np.zeros((field_size, field_size))
     for _ in range(num_steps):
-        new_patches = update_wavefront_patches(prev_patch_list, cur_IOR, cur_IOR_grad, delta_t)
+        new_patches = update_wavefront_patches(prev_patch_list, cur_IOR, cur_IOR_grad, delta_t, refine_threshold)
         for patch in new_patches:
             mid_x, mid_y = patch.mid_pos()
             
