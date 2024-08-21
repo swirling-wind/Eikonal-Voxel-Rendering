@@ -286,7 +286,7 @@ class Renderer:
                     state_flag = 1
                     will_reflect = True
 
-                if state_flag == 1 and tm.length(new_grad) < 0.04 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - 0.002: # - 0.002 geometry ## 0.007 bunny
+                if state_flag == 1 and tm.length(new_grad) < 0.04 and tm.length(new_grad) < tm.length(gradient) and new_ior < voxel_ior - 0.007: # - 0.002 geometry ## 0.007 bunny
                     state_flag = 2
                     will_reflect = True
 
