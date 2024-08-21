@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import sys
 import os
+import pickle
 
 from scipy.ndimage import gaussian_filter
 import scipy.ndimage as ndimage
@@ -64,3 +65,28 @@ def compute_gradients(IOR: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return grad_x, grad_y
     
 
+def save_benchmark_results(benchmark_results, filename='benchmark_results.pkl'):
+    """
+    Save the benchmark results to a file using pickle.
+    
+    :param benchmark_results: The benchmark results dictionary to save
+    :param filename: The name of the file to save the results to (default: 'benchmark_results.pkl')
+    """
+    with open(filename, 'wb') as f:
+        pickle.dump(benchmark_results, f)
+    print(f"Benchmark results saved to {filename}")
+
+def load_benchmark_results(filename='benchmark_results.pkl'):
+    """
+    Load benchmark results from a file.
+    
+    :param filename: The name of the file to load the results from (default: 'benchmark_results.pkl')
+    :return: The loaded benchmark results dictionary
+    """
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"The file {filename} does not exist.")
+    
+    with open(filename, 'rb') as f:
+        benchmark_results = pickle.load(f)
+    print(f"Benchmark results loaded from {filename}")
+    return benchmark_results

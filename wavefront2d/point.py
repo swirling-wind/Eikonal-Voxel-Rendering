@@ -31,7 +31,7 @@ def update_wavefront_points(pos: list[tuple], dir: list[tuple], IOR: np.ndarray,
             new_pos.append((new_x, new_y))
             new_dir.append((new_vx, new_vy))
 
-        else:
+        else: # if the point is outside the IOR field, just let it goes without any update
             pass
 
     return new_pos, new_dir

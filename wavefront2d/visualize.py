@@ -80,7 +80,7 @@ def visualize_wavefront_propagation_patches(wavefront_patch_list: list[list[Patc
         plt.title(f'Step {i} (Remaining patches Number: {len(wavefront_patch_list[i])})')
     plt.show()
 
-def visualize_irradiance(irradiance1: np.ndarray, irradiance2: np.ndarray, title: str):
+def visualize_compare_irradiance(irradiance1: np.ndarray, irradiance2: np.ndarray, title: str):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
     ax1.imshow(irradiance1, cmap='hot', interpolation='nearest')
@@ -95,4 +95,14 @@ def visualize_irradiance(irradiance1: np.ndarray, irradiance2: np.ndarray, title
     
     fig.colorbar(im, ax=[ax1, ax2], label='Irradiance')
     fig.suptitle(title)
+    plt.show()
+
+
+def visualize_irradiance(irradiance: np.ndarray, title: str = "Irradiance"):
+    plt.figure(figsize=(5, 5))
+    plt.imshow(irradiance, cmap='hot', interpolation='nearest')
+    plt.title('Irradiance')
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.colorbar(label=title)
     plt.show()
