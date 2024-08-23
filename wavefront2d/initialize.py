@@ -66,7 +66,7 @@ def get_ior_field(field_type: str, field_size = 128) -> np.ndarray:
     
 
 def compute_gradients(IOR: np.ndarray) -> tuple[np.ndarray, np.ndarray]:    
-    smoothed_ior = gaussian_filter(IOR, sigma=4.0)
+    smoothed_ior = IOR # gaussian_filter(IOR, sigma=4.0)
     grad_x = np.gradient(smoothed_ior, axis=1)
     grad_y = np.gradient(smoothed_ior, axis=0)
     return grad_x, grad_y
