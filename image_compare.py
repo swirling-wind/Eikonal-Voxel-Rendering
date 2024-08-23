@@ -3,6 +3,8 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from skimage.metrics import structural_similarity as ssim
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from common.figure import save_colorbar, save_color_wheel
 
 def load_images(img_path, origin_path):
     img = cv2.imread(img_path)
@@ -45,14 +47,17 @@ def calculate_ssim(img1, img2):
     return ssim(img1, img2, channel_axis=2)
 
 def save_difference_image(diff, index, save_path, vmin, vmax):
-    plt.figure(figsize=(10, 8))
-    plt.imshow(diff, cmap='hot', vmin=vmin, vmax=vmax)
-    if index == '2':
-        plt.colorbar()
-    plt.axis('off')
+    fig, ax = plt.subplots(figsize=(10, 8))
+    im = ax.imshow(diff, cmap='hot', vmin=vmin, vmax=vmax)
+    ax.axis('off')
+    
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight', pad_inches=0, transparent=True)
-    plt.close()
+    plt.close(fig)
+
+    # Save separate colorbar image
+    # if index == '2':
+    #     save_colorbar(os.path.splitext(save_path)[0] + '_colorbar.png', vmin, vmax)
 
 def save_gradient_difference_image(magnitude, direction, index, save_path, intensity=1.5):
     plt.figure(figsize=(10, 8))
@@ -71,14 +76,7 @@ def save_gradient_difference_image(magnitude, direction, index, save_path, inten
     rgb_image = cv2.cvtColor((hsv_image * 255).astype(np.uint8), cv2.COLOR_HSV2RGB)
     
     plt.imshow(rgb_image)
-    
-    # 添加颜色条来表示方向
-    if index == '2':
-        cbar = plt.colorbar(ticks=[0, 0.25, 0.5, 0.75, 1])
-        cbar.set_ticklabels(['0°', '90°', '180°', '270°', '360°'])
-        cbar.set_label('Gradient Direction')
-    
-    # plt.title(title)
+
     plt.axis('off')
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight', pad_inches=0, transparent=True)
@@ -175,7 +173,7 @@ def print_csv(all_metrics):
             ]
             print(','.join(row))
 
-# 使用示例
+
 base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 10
@@ -184,3 +182,6 @@ intensity = 4  # intensity for gradient difference visualization
 
 all_metrics = process_all_images(base_path, file_types, num_threshold, grad_threshold, intensity)
 print_csv(all_metrics)
+
+# save_path = os.path.join(os.getcwd(), "images", "color_wheel.png")
+# save_color_wheel(save_path)

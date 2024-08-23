@@ -3,6 +3,8 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.collections import CircleCollection
 
 def normalize_camera_pos(cam_pos: tuple | np.ndarray, distance=2.5) -> np.ndarray:
     cam_pos = np.array(cam_pos)
@@ -26,3 +28,65 @@ def save_offline_render(scene: Scene, scene_config: dict, filename: str, to_plot
             plt.title(f"Camera Pos: [{camera_pos_list[idx][0]:.2f}, {camera_pos_list[idx][1]:.2f}, {camera_pos_list[idx][2]:.2f}]")
             plt.axis('off')
             plt.show()
+
+
+def save_colorbar(save_path, vmin=0, vmax=105):
+    fig, ax = plt.subplots(figsize=(1, 16))
+    fig.subplots_adjust(bottom=0.5)
+
+    cmap = plt.get_cmap('hot') # type: ignore
+    norm = plt.Normalize(vmin=vmin, vmax=vmax) # type: ignore
+    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), # type: ignore
+                      cax=ax, orientation='vertical')
+    # cb.set_label('Difference')
+
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+
+
+def save_color_wheel(save_path):
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='polar'))
+
+    # 创建色轮数据
+    n_points = 100000
+    theta = np.random.uniform(0, 2*np.pi, n_points)
+    radii = np.sqrt(np.random.uniform(0, 1, n_points)) / 1.4  # 使用平方根分布来确保均匀填充
+
+    # 调整 theta 以匹配梯度方向的计算
+    adjusted_theta = (-theta + np.pi/2 * 3) % (2*np.pi)
+
+    # 创建颜色映射
+    colors = plt.cm.hsv(adjusted_theta / (2*np.pi))
+
+    # 绘制实心色球
+    circles = CircleCollection(sizes=[40]*n_points, offsets=list(zip(theta, radii)),
+                               transOffset=ax.transData, facecolors=colors, edgecolors='none')
+    ax.add_collection(circles)
+
+    # 设置绘图范围
+    ax.set_ylim(0, 1)
+
+    # 移除所有刻度线和网格线
+    ax.set_yticks([])
+    ax.set_xticks([])
+
+    # 手动绘制更粗的轴线
+    ax.plot([0, 0], [0, 0.99], color='black', linewidth=3)  # x轴
+    ax.plot([np.pi/2, np.pi/2], [0, 0.99], color='black', linewidth=3)  # y轴
+
+    # 手动添加 x 和 y 标签
+    ax.text(0, 1, '+x', ha='center', va='bottom', fontsize=42)
+    ax.text(np.pi/2, 1, '+y', ha='left', va='center', fontsize=42)
+
+    ax.set_frame_on(False)
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    
+    # 设置背景透明
+    ax.set_facecolor('none')
+    fig.patch.set_alpha(0.0)
+
+    plt.tight_layout()
+
+    plt.savefig(save_path, dpi=300, bbox_inches='tight', pad_inches=0, transparent=True)
+    plt.close(fig)
