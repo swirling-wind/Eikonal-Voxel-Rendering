@@ -98,13 +98,3 @@ def visualize_compare_irradiance(irradiance1: np.ndarray, irradiance2: np.ndarra
     plt.show()
 
 
-def visualize_irradiance(irradiance: np.ndarray, title: str = "Irradiance"):
-    plt.figure(figsize=(5, 5))
-    plt.imshow(irradiance, cmap='hot', interpolation='nearest')
-    # plt.title(title)
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.colorbar(label="Irradiance")
-    save_path = os.path.join(os.getcwd(), "images", f"{title}.png")
-    plt.savefig(save_path, dpi=300)
-    plt.show()
