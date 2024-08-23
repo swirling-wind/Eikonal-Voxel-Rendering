@@ -175,7 +175,7 @@ def print_csv(all_metrics):
             print(','.join(row))
 
 # 使用示例
-base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "bunny")
+base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
 file_types = ['MLP', 'Siren', 'Octree']
 num_threshold = 10  # 数值差异阈值，根据需要调整
 grad_threshold = 15  # 梯度差异阈值，根据需要调整
