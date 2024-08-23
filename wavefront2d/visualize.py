@@ -101,7 +101,7 @@ def visualize_compare_irradiance(irradiance1: np.ndarray, irradiance2: np.ndarra
 def visualize_irradiance(irradiance: np.ndarray, title: str = "Irradiance"):
     plt.figure(figsize=(5, 5))
     plt.imshow(irradiance, cmap='hot', interpolation='nearest')
-    plt.title(title)
+    # plt.title(title)
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.colorbar(label="Irradiance")
