@@ -174,14 +174,20 @@ def print_csv(all_metrics):
             print(','.join(row))
 
 
-base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
-file_types = ['MLP', 'Siren', 'Octree']
-num_threshold = 10
-grad_threshold = 15
-intensity = 4  # intensity for gradient difference visualization
+# base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
+# file_types = ['MLP', 'Siren', 'Octree']
+# num_threshold = 10
+# grad_threshold = 15
+# intensity = 4  # intensity for gradient difference visualization
 
-all_metrics = process_all_images(base_path, file_types, num_threshold, grad_threshold, intensity)
-print_csv(all_metrics)
+# all_metrics = process_all_images(base_path, file_types, num_threshold, grad_threshold, intensity)
+# print_csv(all_metrics)
 
-# save_path = os.path.join(os.getcwd(), "images", "color_wheel.png")
-# save_color_wheel(save_path)
+
+## Save color wheel
+save_path = os.path.join(os.getcwd(), "images", "color_wheel.png")
+save_color_wheel(save_path)
+
+## Save colorbar
+# save_path = os.path.join(os.getcwd(), "images", "hot_colorbar.png")
+# save_colorbar(save_path, vmin=0, vmax=105)
