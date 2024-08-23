@@ -44,17 +44,17 @@ def calculate_psnr(mse, max_pixel=255.0):
 def calculate_ssim(img1, img2):
     return ssim(img1, img2, channel_axis=2)
 
-def save_difference_image(diff, title, save_path, vmin, vmax):
+def save_difference_image(diff, index, save_path, vmin, vmax):
     plt.figure(figsize=(10, 8))
     plt.imshow(diff, cmap='hot', vmin=vmin, vmax=vmax)
-    # plt.colorbar()
-    # plt.title(title)
+    if index == '2':
+        plt.colorbar()
     plt.axis('off')
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight', pad_inches=0, transparent=True)
     plt.close()
 
-def save_gradient_difference_image(magnitude, direction, title, save_path, intensity=1.5):
+def save_gradient_difference_image(magnitude, direction, index, save_path, intensity=1.5):
     plt.figure(figsize=(10, 8))
     
     # 将方向从弧度转换为度数
@@ -73,9 +73,10 @@ def save_gradient_difference_image(magnitude, direction, title, save_path, inten
     plt.imshow(rgb_image)
     
     # 添加颜色条来表示方向
-    # cbar = plt.colorbar(ticks=[0, 0.25, 0.5, 0.75, 1])
-    # cbar.set_ticklabels(['0°', '90°', '180°', '270°', '360°'])
-    # cbar.set_label('Gradient Direction')
+    if index == '2':
+        cbar = plt.colorbar(ticks=[0, 0.25, 0.5, 0.75, 1])
+        cbar.set_ticklabels(['0°', '90°', '180°', '270°', '360°'])
+        cbar.set_label('Gradient Direction')
     
     # plt.title(title)
     plt.axis('off')
@@ -125,11 +126,11 @@ def process_index(base_path, file_types, index, num_threshold, grad_threshold, i
     for file_type in file_types:
         if file_type in num_diffs and file_type in grad_magnitudes:
             save_difference_image(num_diffs[file_type], 
-                                  f'Numerical Difference ({file_type}, Index: {index}, Threshold: {num_threshold})', 
+                                  index, 
                                   os.path.join(base_path, f'num_diff_{file_type}_{index}.png'),
                                   num_min, num_max)
             save_gradient_difference_image(grad_magnitudes[file_type], grad_directions[file_type],
-                                           f'Gradient Difference ({file_type}, Index: {index}, Threshold: {grad_threshold})', 
+                                           index, 
                                            os.path.join(base_path, f'grad_diff_{file_type}_{index}.png'),
                                            intensity)
     
@@ -177,9 +178,9 @@ def print_csv(all_metrics):
 # 使用示例
 base_path = os.path.join(os.getcwd(), "images", "Light_wooden_frame_room_2k.hdr", "geometry")
 file_types = ['MLP', 'Siren', 'Octree']
-num_threshold = 10  # 数值差异阈值，根据需要调整
-grad_threshold = 15  # 梯度差异阈值，根据需要调整
-intensity = 4  # 梯度差异可视化的强度，可以根据需要调整
+num_threshold = 10
+grad_threshold = 15
+intensity = 4  # intensity for gradient difference visualization
 
 all_metrics = process_all_images(base_path, file_types, num_threshold, grad_threshold, intensity)
 print_csv(all_metrics)
