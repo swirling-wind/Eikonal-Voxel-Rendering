@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import time
 # import __main__
 import numpy as np
 import taichi as ti
@@ -67,9 +68,14 @@ class Scene:
             self.renderer.reset_framebuffer()
             self.renderer.recompute_bbox()
 
+            # count time of rendering
+            start_time = time.time()
+
             for _cur_spp in range(150):
                 self.renderer.ray_marching()
                 self.renderer.current_spp += 1
+
+            print(f"Rendering time: {time.time() - start_time:.4f}s")
             
             raw_img = self.renderer.fetch_image().to_numpy()
             transposed_img = np.transpose(raw_img, (1, 0, 2))[::-1, :, :]

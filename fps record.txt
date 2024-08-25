@@ -1,0 +1,12 @@
+Average frames per second:
+
+geometry scene:
+index 0: 27.17 fps
+index 1: 28.96 fps
+index 2: 28.93 fps
+
+
+bunny scene:
+index 0: 34.35 fps
+index 1: 35.31 fps
+index 2: 38.84 fps

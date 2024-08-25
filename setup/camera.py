@@ -3,7 +3,7 @@ import taichi as ti
 
 from common.math_utils import np_normalize, np_rotate_matrix
 
-INITIAL_POS = (0.0, 0.0, 3.0)
+INITIAL_POS = (0.0, 0.0, 2.5)
 
 class TranslateCamera:
     def __init__(self, window, up):
