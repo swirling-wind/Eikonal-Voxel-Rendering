@@ -185,8 +185,8 @@ def print_csv(all_metrics):
 
 
 ## Save color wheel
-save_path = os.path.join(os.getcwd(), "images", "color_wheel.png")
-save_color_wheel(save_path)
+# save_path = os.path.join(os.getcwd(), "images", "color_wheel.png")
+# save_color_wheel(save_path)
 
 ## Save colorbar
 # save_path = os.path.join(os.getcwd(), "images", "hot_colorbar.png")
