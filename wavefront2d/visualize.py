@@ -58,28 +58,68 @@ def visualize_wavefront_propagation_points(wavefront_pos_list: list[list[tuple]]
     plt.show()
 
 
+# def visualize_wavefront_propagation_patches(wavefront_patch_list: list[list[Patch]], 
+#                                     cur_IOR: np.ndarray, num_show_images=5):
+#     # show the wavefront propagation in num_show_images steps between 0 and num_steps
+#     num_steps = len(wavefront_patch_list) - 1
+#     num_show_images = [i for i in range(0, num_steps + 1, num_steps // num_show_images)]
+
+#     plt.figure(figsize=(5 * len(num_show_images), 5))
+#     for i in num_show_images:
+#         plt.subplot(1, len(num_show_images), num_show_images.index(i) + 1)
+#         plt.imshow(cur_IOR, cmap='Blues', vmin=1.0, vmax=1.5)
+        
+#         for j, patch in enumerate(wavefront_patch_list[i]):
+#             start_pos = patch.start_pos
+#             end_pos = patch.end_pos
+#             plt.plot([start_pos[0], end_pos[0]], [start_pos[1], end_pos[1]], color='red')            
+#             if j % 10 == 0:
+#                 mid_pos = patch.mid_pos()
+#                 plt.arrow(mid_pos[0], mid_pos[1], patch.start_dir[0], patch.start_dir[1], color='blue', head_width=3)
+        
+#         plt.title(f'Step {i} (Remaining patches Number: {len(wavefront_patch_list[i])})')
+#     plt.show()
+
 def visualize_wavefront_propagation_patches(wavefront_patch_list: list[list[Patch]], 
-                                    cur_IOR: np.ndarray, num_show_images=5):
+                                    cur_IOR: np.ndarray, title: str, num_show_images=5):
     # show the wavefront propagation in num_show_images steps between 0 and num_steps
     num_steps = len(wavefront_patch_list) - 1
     num_show_images = [i for i in range(0, num_steps + 1, num_steps // num_show_images)]
 
+    height, width = cur_IOR.shape
+    assert height == 128 and width == 128, "cur_IOR should be 128x128"
+
     plt.figure(figsize=(5 * len(num_show_images), 5))
     for i in num_show_images:
-        plt.subplot(1, len(num_show_images), num_show_images.index(i) + 1)
-        plt.imshow(cur_IOR, cmap='Blues', vmin=1.0, vmax=1.5)
+        ax = plt.subplot(1, len(num_show_images), num_show_images.index(i) + 1)
+        plt.imshow(cur_IOR, cmap='Blues', vmin=1.0, vmax=1.5, extent=[0, 128, 128, 0])
         
         for j, patch in enumerate(wavefront_patch_list[i]):
             start_pos = patch.start_pos
             end_pos = patch.end_pos
+            
+            # Clip the start and end positions to the display range
+            start_pos = np.clip(start_pos, 0, 127)
+            end_pos = np.clip(end_pos, 0, 127)
+            
             plt.plot([start_pos[0], end_pos[0]], [start_pos[1], end_pos[1]], color='red')            
-            if j % 20 == 0:
-                mid_pos = patch.mid_pos()
-                plt.arrow(mid_pos[0], mid_pos[1], patch.start_dir[0], patch.start_dir[1], color='blue', head_width=3)
+            if j % 10 == 0:
+                mid_pos = (start_pos + end_pos) / 2
+                dir_vec = patch.start_dir
+                # Scale down the direction vector to ensure it stays within bounds
+                scale = min(5, 128 / max(abs(dir_vec[0]), abs(dir_vec[1])))
+                dir_vec = dir_vec * scale
+                plt.arrow(mid_pos[0], mid_pos[1], dir_vec[0], dir_vec[1], 
+                          color='blue', head_width=2, length_includes_head=True)
         
-        plt.title(f'Step {i} (Remaining patches Number: {len(wavefront_patch_list[i])})')
+        plt.title(f'Step {i} (Remaining patches: {len(wavefront_patch_list[i])})')
+        ax.set_xlim(0, 128)
+        ax.set_ylim(128, 0)  # Reverse y-axis to match image coordinates
+    plt.tight_layout()
+    save_path = os.path.join(os.getcwd(), "images", f"{title}-patch.png")
+    plt.savefig(save_path, dpi=300)
     plt.show()
-
+    
 def visualize_compare_irradiance(irradiance1: np.ndarray, irradiance2: np.ndarray, title: str):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
