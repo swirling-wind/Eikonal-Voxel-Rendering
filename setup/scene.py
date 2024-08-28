@@ -191,23 +191,23 @@ class Scene:
         self.renderer.scatter_strength.from_numpy(scatter_field)
 
     #### Truncate outside the surface of objects ####
-    def truncate_outside_surface(self, gradient_threshold: float = 0.05):
-        outside_mask = np.linalg.norm(self.gradient, axis=-1) < gradient_threshold
-        temp_ior = self.ior.copy()
-        temp_ior[outside_mask] = 1.0
-        self.ior = temp_ior
+    # def truncate_outside_surface(self, gradient_threshold: float = 0.05):
+    #     outside_mask = np.linalg.norm(self.gradient, axis=-1) < gradient_threshold
+    #     temp_ior = self.ior.copy()
+    #     temp_ior[outside_mask] = 1.0
+    #     self.ior = temp_ior
 
-        temp_atten = self.attenuation.copy()
-        temp_atten[outside_mask] = 0.0
-        self.attenuation = temp_atten
+    #     temp_atten = self.attenuation.copy()
+    #     temp_atten[outside_mask] = 0.0
+    #     self.attenuation = temp_atten
 
-        temp_scatter = self.scatter_strength.copy()
-        temp_scatter[outside_mask] = 0.0
-        self.scatter_strength = temp_scatter
+    #     temp_scatter = self.scatter_strength.copy()
+    #     temp_scatter[outside_mask] = 0.0
+    #     self.scatter_strength = temp_scatter
 
-        temp_grad = self.gradient.copy()
-        temp_grad[outside_mask, :] = 0
-        self.gradient = temp_grad
+    #     temp_grad = self.gradient.copy()
+    #     temp_grad[outside_mask, :] = 0
+    #     self.gradient = temp_grad
 
     def apply_filter(self, proc_config: dict):
         sigma = proc_config["Gauss Sigma"]
