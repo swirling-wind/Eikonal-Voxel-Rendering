@@ -12,7 +12,7 @@ from common.mesh_loader import *
 def get_ior_field(field_type: str, field_size = 128) -> np.ndarray:
     height, width = field_size, field_size
 
-    center = (height//2, width//2)
+    center = (height//2, width // 6 * 5)
     radius = int(field_size / 3) 
     y, x = np.ogrid[:height, :width]
     mask = (x - center[1])**2 + (y - center[0])**2 <= radius**2
@@ -29,7 +29,7 @@ def get_ior_field(field_type: str, field_size = 128) -> np.ndarray:
         return board_ior_field
     elif field_type == "convex":
         convex_lens_ior_field = np.ones((height, width), dtype=np.float32)
-        convex_lens_ior_field[mask] = 1.5
+        convex_lens_ior_field[mask] = 1.8
         return convex_lens_ior_field
     elif field_type == "concave":
         concave_lens_ior_field = np.ones((height, width), dtype=np.float32) * 1.5
