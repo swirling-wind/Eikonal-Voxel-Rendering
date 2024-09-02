@@ -9,7 +9,6 @@ from common.figure import save_colorbar, save_color_wheel
 def load_images(img_path, origin_path):
     img = cv2.imread(img_path)
     origin_img = cv2.imread(origin_path)
-    # 将BGR转换为RGB颜色空间
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     origin_img = cv2.cvtColor(origin_img, cv2.COLOR_BGR2RGB)
     return img, origin_img
@@ -62,14 +61,14 @@ def save_difference_image(diff, index, save_path, vmin, vmax):
 def save_gradient_difference_image(magnitude, direction, index, save_path, intensity=1.5):
     plt.figure(figsize=(10, 8))
     
-    # 将方向从弧度转换为度数
+    # Adjust hue to visualize gradient direction
     hue = (direction + np.pi) / (2 * np.pi)
     
-    # 调整饱和度和明度以加粗梯度差异
+    # Adjust saturation and value to visualize gradient magnitude
     saturation = np.ones_like(magnitude)
     value = cv2.normalize(magnitude, None, 0, 1, cv2.NORM_MINMAX) # type: ignore
     
-    # 应用强度因子
+    # Apply intensity factor
     value = np.clip(value * intensity, 0, 1)
     
     hsv_image = np.stack((hue, saturation, value), axis=2)
@@ -137,8 +136,7 @@ def process_index(base_path, file_types, index, num_threshold, grad_threshold, i
 
 def process_all_images(base_path, file_types, num_threshold, grad_threshold, intensity=1.5):
     all_metrics = {}
-    
-    # 获取所有索引
+   
     indices = set()
     for file_type in file_types:
         for filename in os.listdir(base_path):
@@ -146,7 +144,6 @@ def process_all_images(base_path, file_types, num_threshold, grad_threshold, int
                 index = filename[len(file_type)+1:-4]
                 indices.add(index)
     
-    # 对每个索引进行处理
     for index in indices:
         metrics = process_index(base_path, file_types, index, num_threshold, grad_threshold, intensity)
         if metrics:
