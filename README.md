@@ -21,10 +21,6 @@ This project implements a modern Python-based Eikonal rendering pipeline using P
 -   **Efficient Storage:** Explores hierarchical data structures (Octree, MLP, SIREN) for compactly storing pre-computed irradiance data, reducing memory overhead.
 -   **Volumetric Rendering:** Handles effects like scattering, absorption, and emission within translucent materials.
 
-### Background
-
-Eikonal rendering is an efficient technique for real-time rendering of complex light paths in varying media, based on solving the Eikonal equation. It's crucial for applications like games, VR, and design software where realistic interactive visuals are needed.
-
 ### Project Aims
 
 1.  **Modernize the Codebase:** Re-implement Eikonal rendering in modern Python to overcome limitations of outdated C++/CUDA codebases (hard maintenance, lack of ML integration).
@@ -54,10 +50,6 @@ See *requirements.txt*
 -   **高效存储:** 探索使用层次化数据结构（八叉树、MLP、SIREN）来紧凑存储预计算的辐照度数据，降低内存开销。
 -   **体渲染:** 处理半透明材料内部的散射、吸收和自发光等效。
 
-### 背景
-
-Eikonal 渲染是一种基于求解 Eikonal 方程的高效技术，用于在变化介质中实时渲染复杂的光路。它对于需要逼真交互视觉效果的应用程序（如游戏、VR和设计软件）至关重要。
-
 ### 项目目标
 
 1.  **代码库现代化:** 用现代 Python 重新实现 Eikonal 渲染，克服过时的 C++/CUDA 代码库的局限性（难以维护、缺乏 ML 集成）。
@@ -67,3 +59,4 @@ Eikonal 渲染是一种基于求解 Eikonal 方程的高效技术，用于在变
 ### 安装与使用
 
 见*requirements.txt*
+
