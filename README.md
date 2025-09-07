@@ -4,12 +4,14 @@
 
 ---
 
+<img width="1280" height="960" alt="Siren_0" src="https://github.com/user-attachments/assets/8427abb7-ae6e-4a99-aa19-0d1c5d0db276" />
+
 <a name="english"></a>
 ## English
 
 ### Overview
 
-This project implements a modern Python-based Eikonal rendering pipeline using PyTorch and Taichi for real-time rendering of complex optical effects like refraction, reflection, and anisotropic scattering in non-homogeneous media (e.g., glass, crystals).
+This project implements a Python-based real-time Eikonal rendering pipeline using PyTorch and Taichi for complex optical effects like refraction, reflection, and anisotropic scattering in non-homogeneous media (e.g., glass, crystals).
 
 ### Key Features
 
@@ -38,7 +40,7 @@ See *requirements.txt*
 
 ### 概述
 
-本项目使用 PyTorch 和 Taichi 实现了一个基于现代 Python 的 Eikonal 渲染管线，用于实时渲染非均匀介质（如玻璃、晶体）中复杂的折射、反射和各向异性散射等光学效果。
+本项目使用 PyTorch 和 Taichi 实现了一个基于现代 Python 的 Eikonal 实时渲染管线，用于渲染非均匀介质（如玻璃、晶体）中复杂的折射、反射和各向异性散射等光学效果。
 
 ### 主要特性
 
@@ -59,4 +61,5 @@ See *requirements.txt*
 ### 安装与使用
 
 见*requirements.txt*
+
 
